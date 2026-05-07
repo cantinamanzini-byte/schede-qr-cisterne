@@ -30,7 +30,7 @@ label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:
 <body>
 <header>
   <div class="logo">QR</div>
-  <div><h1>Schede QR Cisterne</h1><div class="sub">v10 · URL base preimpostato</div></div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v10 · URL base preimpostato · dati online</div></div>
   <div class="actions">
     <button onclick="showHome()">Home</button>
     <button onclick="openListsManager()">Liste vini</button><button onclick="showTotals()">Totali</button>
@@ -274,6 +274,26 @@ function renderLists(){renderSmallList('denominations','denList');renderSmallLis
 function addListVal(key,inputId){const v=(document.getElementById(inputId).value||'').trim();if(!v)return;state.lists[key]=state.lists[key]||[];if(!state.lists[key].includes(v))state.lists[key].push(v);document.getElementById(inputId).value='';save();renderLists();renderMain()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dati_qr_cisterne.json';a.click()}
 function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{state=JSON.parse(rd.result);save();selectedId=state.containers[0]?.id||null;renderList();renderMain();alert('Dati importati.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
+
+async function loadOnlineDataIfAvailable(){
+  // Su GitHub/iPhone carica sempre il file dati online, così la Home mostra le schede aggiornate.
+  if(location.protocol==='file:') return false;
+  try{
+    const r=await fetch('dati_qr_cisterne.json?ts='+Date.now(), {cache:'no-store'});
+    if(!r.ok) return false;
+    const data=await r.json();
+    if(data && Array.isArray(data.containers)){
+      state=data;
+      state.lists=state.lists||defaultState().lists;
+      state.containers=state.containers||[];
+      if(!state.qrBaseUrl)state.qrBaseUrl='https://cantinamanzini-byte.github.io/schede-qr-cisterne/schede_qr_cisterne_v10.html';
+      selectedId=state.containers[0]?.id||null;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 function publicCardHtml(c){
   return `<div class="public-card">
     <h1>${esc(titleC(c))}</h1>
@@ -289,6 +309,26 @@ function publicCardHtml(c){
     <p><b>Note:</b> ${esc(c.notes||'')}</p>
   </div>`;
 }
+
+async function loadOnlineDataIfAvailable(){
+  // Su GitHub/iPhone carica sempre il file dati online, così la Home mostra le schede aggiornate.
+  if(location.protocol==='file:') return false;
+  try{
+    const r=await fetch('dati_qr_cisterne.json?ts='+Date.now(), {cache:'no-store'});
+    if(!r.ok) return false;
+    const data=await r.json();
+    if(data && Array.isArray(data.containers)){
+      state=data;
+      state.lists=state.lists||defaultState().lists;
+      state.containers=state.containers||[];
+      if(!state.qrBaseUrl)state.qrBaseUrl='https://cantinamanzini-byte.github.io/schede-qr-cisterne/schede_qr_cisterne_v10.html';
+      selectedId=state.containers[0]?.id||null;
+      return true;
+    }
+  }catch(e){}
+  return false;
+}
+
 function publicCardHtml(c){
   return `<div class="public-card">
     <h1>${esc(titleC(c))}</h1>
@@ -324,7 +364,7 @@ async function maybePublicView(){
   document.body.innerHTML=publicCardHtml(c);
   return true;
 }
-load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();renderMain();}});
+load();maybePublicView().then(async isPublic=>{if(!isPublic){await loadOnlineDataIfAvailable();renderList();renderMain();}});
 </script>
 </body>
 </html>
