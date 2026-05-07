@@ -1,0 +1,407 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schede QR Cisterne v13</title>
+<style>
+:root{--bg:#f5f1e8;--panel:#fffaf0;--line:#d6cab3;--soft:#e9dfcb;--ink:#28242a;--muted:#706873;--accent:#173f42;--danger:#7b274b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:10;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#5d0b25,#173f42);color:#fff7df;display:grid;place-items:center;font-weight:900}
+h1{font-size:20px;margin:0}.sub{font-size:12px;color:var(--muted)}.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+button{border:1px solid var(--line);background:#fff8e8;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer;color:var(--ink)}
+button.primary{background:var(--accent);border-color:var(--accent);color:white}button.danger{background:var(--danger);border-color:var(--danger);color:white}button.small{padding:5px 8px;font-size:12px}
+.layout{display:grid;grid-template-columns:310px 1fr;min-height:calc(100vh - 72px)}aside{background:#eee5d3;border-right:1px solid var(--line);padding:12px;overflow:auto;max-height:calc(100vh - 72px)}main{padding:18px;overflow:auto}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fffdf6;padding:10px 11px;font-size:15px;color:var(--ink)}textarea{min-height:72px;resize:vertical}
+label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:uppercase;margin:8px 0 5px}.search{margin-bottom:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}.card.active{outline:3px solid rgba(23,63,66,.22)}.card h3{margin:0 0 6px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.badge{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}.notice{background:#fbefd2;border:1px solid #dec99d;border-radius:12px;padding:12px;margin:10px 0}.notice.ok{background:#e9f7ef;border-color:#badfcc;color:#164b31}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.kpi{background:#e2dcd0;border:1px solid var(--line);border-radius:12px;padding:12px}.kpi .v{font-weight:900;font-size:22px}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:none;align-items:flex-start;justify-content:center;padding:30px 10px;overflow:auto}.modal{width:min(900px,96vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 15px 45px rgba(0,0,0,.28)}.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fffdf6}table{border-collapse:collapse;width:100%;min-width:760px}th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:8px}th{background:#d8d2c9;text-align:left}
+.qr-img{width:280px;height:280px;border:1px solid var(--line);border-radius:10px;background:white;padding:4px}.public-card{max-width:560px;margin:30px auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.08)}.public-card .value{font-size:20px;font-weight:900}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}aside{max-height:none}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+@media print{header,aside,.no-print,.actions,.section-title button,.modal-back{display:none!important}body{background:white}.layout{display:block}main{padding:0}.print-sheet{display:block!important}}
+.print-sheet{display:none}
+.sync-box{background:#fff;border:1px solid #c8e6c9;border-radius:14px;padding:10px 12px;margin:10px 18px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sync-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#999;margin-right:6px}.sync-dot.ok{background:#2e7d32}.sync-dot.warn{background:#f57c00}.sync-dot.err{background:#c62828}.sync-text{font-size:13px;font-weight:800;color:#455a64}</style>
+</head>
+<body>
+<header>
+  <div class="logo">QR</div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v13 · home totali corretti</div></div>
+  <div class="actions">
+    <button onclick="showHome()">Home</button>
+    <button onclick="openListsManager()">Liste vini</button><button onclick="showTotals()">Totali</button>
+    <button onclick="printQrLabels()">Stampa QR</button>
+    <button class="primary" onclick="saveToCloud(false)">Salva dati QR online</button>
+    <button onclick="document.getElementById('importFile').click()">Importa dati</button>
+    <input id="importFile" type="file" accept="application/json,.json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+<div class="sync-box">
+  <div class="sync-text"><span id="syncDot" class="sync-dot"></span><span id="syncStatus">Google Sheets: avvio...</span></div>
+  <button class="small" onclick="forzaSyncCloud()">Sincronizza ora</button>
+</div>
+<div id="app" class="layout">
+  <aside>
+    <input id="search" class="search" placeholder="Cerca contenitore, vino, lotto..." oninput="renderList()">
+    <button class="primary" style="width:100%" onclick="newContainer()">+ Nuovo contenitore</button>
+    <div id="cards"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<div id="listModal" class="modal-back">
+  <div class="modal">
+    <div class="modal-head"><h2>Liste vini</h2><button onclick="closeListsManager()">Chiudi</button></div>
+    <div class="notice">Gestisci le voci dei menu a tendina. Le descrizioni e i nomi compaiono nelle schede contenitore.</div>
+    <div class="grid">
+      <div><h3>Denominazioni</h3><input id="newDen" placeholder="Nuova denominazione"><button class="primary" onclick="addListVal('denominations','newDen')">+ Inserisci</button><div id="denList"></div></div>
+      <div><h3>Nomi vino</h3><input id="newName" placeholder="Nuovo nome vino"><button class="primary" onclick="addListVal('wineNames','newName')">+ Inserisci</button><div id="nameList"></div></div>
+      <div><h3>Categorie</h3><input id="newCat" placeholder="Nuova categoria"><button class="primary" onclick="addListVal('categories','newCat')">+ Inserisci</button><div id="catList"></div></div>
+      <div><h3>Colori</h3><input id="newColor" placeholder="Nuovo colore"><button class="primary" onclick="addListVal('colors','newColor')">+ Inserisci</button><div id="colorList"></div></div>
+      <div><h3>Gusti</h3><input id="newTaste" placeholder="Nuovo gusto"><button class="primary" onclick="addListVal('tastes','newTaste')">+ Inserisci</button><div id="tasteList"></div></div>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORE='schede_qr_cisterne_v1';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbzDGETAvJ4INaQT6REKGSOcvZW05hNGVbBZFizAlHIdmhPXTFuZRlEqQtW12LKfKdzt/exec';
+let syncTimer=null;
+let state, selectedId=null;
+function newId(){return 'c'+Date.now()+Math.random().toString(16).slice(2)}
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function fmt(n,d=2){return (Number(n)||0).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function dateIT(d){if(!d)return'';const p=String(d).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(d)}
+function opt(arr,val=''){return '<option value=""></option>'+arr.map(x=>`<option value="${esc(x)}" ${String(x)===String(val)?'selected':''}>${esc(x)}</option>`).join('')}
+function blankContainer(no=''){return {id:newId(),type:'Autoclave',number:String(no||''),serial:'',capacity:'',year:'',date:today(),annata:String(new Date().getFullYear()),liters:'',hl:'',denomination:'',wineName:'',category:'',color:'Rosso',taste:'',lot:'',idoneitaNo:'',idoneitaDate:'',containsSulfites:true,productItaly:true,notes:'',empty:true,updatedAt:new Date().toISOString()}}
+function defaultState(){const containers=[];for(let i=1;i<=39;i++)containers.push(blankContainer(i));return {qrBaseUrl:'https://cantinamanzini-byte.github.io/schede-qr-cisterne/',lists:{denominations:['LAMBRUSCO GRASPAROSSA DI CASTELVETRO','BIANCO DI MODENA','LAMBRUSCO DI MODENA','VINO DA TAVOLA'],wineNames:['BOLLA ROSSA','L’ACINO','BOLLICINE','ACINO TAGLIO UNICO','ACINO TRATTATO'],categories:['MPF','Frizzante','Spumante','Vino','Vino frizzante','Vino in elaborazione'],colors:['Bianco','Rosato','Rosso'],tastes:['Dry','Secco','Amabile','Dolce','Brut','Extra Dry','Abboccato','Altro']},containers}}
+function load(){state=JSON.parse(localStorage.getItem(STORE)||'null')||defaultState();state.lists=state.lists||defaultState().lists;if(!state.qrBaseUrl)state.qrBaseUrl='https://cantinamanzini-byte.github.io/schede-qr-cisterne/';state.containers=state.containers||[];selectedId=state.containers[0]?.id||null}
+function save(){localStorage.setItem(STORE,JSON.stringify(state));scheduleCloudSync()}
+
+function setSyncStatus(text,tipo=''){
+  const s=document.getElementById('syncStatus'), d=document.getElementById('syncDot');
+  if(s)s.textContent=text;
+  if(d)d.className='sync-dot'+(tipo?' '+tipo:'');
+}
+function normalizeCloudData(d){
+  const base=defaultState();
+  d=d||{};
+  d.lists=d.lists||base.lists;
+  d.containers=Array.isArray(d.containers)?d.containers:base.containers;
+  return d;
+}
+function loadFromCloud(){
+  return new Promise((resolve,reject)=>{
+    const cb='qrCisterneCallback_'+Date.now();
+    const script=document.createElement('script');
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('Tempo scaduto'));},15000);
+    function cleanup(){
+      clearTimeout(timeout);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+    window[cb]=(res)=>{
+      cleanup();
+      if(res&&res.ok)resolve(normalizeCloudData(res.data));
+      else reject(new Error('Risposta cloud non valida'));
+    };
+    script.onerror=()=>{cleanup();reject(new Error('Errore collegamento cloud'));};
+    script.src=CLOUD_URL+'?callback='+encodeURIComponent(cb)+'&t='+Date.now();
+    document.body.appendChild(script);
+  });
+}
+async function saveToCloud(silent=true){
+  try{
+    setSyncStatus('Salvataggio su Google Sheets...', 'warn');
+    localStorage.setItem(STORE,JSON.stringify(state));
+    await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
+    setSyncStatus('Sincronizzato con Google Sheets','ok');
+    if(!silent)alert('Dati salvati su Google Sheets.');
+  }catch(e){
+    setSyncStatus('Errore cloud: dati salvati solo su questo dispositivo','err');
+    if(!silent)alert('Non sono riuscito a salvare su Google Sheets. Dati salvati solo sul dispositivo.');
+  }
+}
+function scheduleCloudSync(){
+  if(syncTimer)clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>saveToCloud(true),900);
+}
+async function startCloud(){
+  setSyncStatus('Caricamento da Google Sheets...','warn');
+  const localState=state;
+  try{
+    const cloud=await loadFromCloud();
+    if(cloud && cloud.containers && cloud.containers.length){
+      state=cloud;
+      localStorage.setItem(STORE,JSON.stringify(state));
+      selectedId=state.containers[0]?.id||null;
+      setSyncStatus('Dati caricati da Google Sheets','ok');
+      renderList();renderMain();
+    }else{
+      state=localState;
+      setSyncStatus('Google Sheets collegato, dati vuoti','ok');
+      renderList();renderMain();
+    }
+  }catch(e){
+    setSyncStatus('Cloud non raggiungibile: uso dati dispositivo','err');
+    renderList();renderMain();
+  }
+}
+async function forzaSyncCloud(){
+  await saveToCloud(false);
+}
+
+function getC(){return state.containers.find(c=>c.id===selectedId)||state.containers[0]}
+function titleC(c){return `${c.type||'Contenitore'} ${c.number||''}`.trim()}
+function publicData(c){
+  return {type:c.type,number:c.number,serial:c.serial,capacity:c.capacity,year:c.year,date:c.date,annata:c.annata,liters:c.liters,hl:c.hl,denomination:c.denomination,wineName:c.wineName,category:c.category,color:c.color,lot:c.lot,idoneitaNo:c.idoneitaNo,idoneitaDate:c.idoneitaDate,containsSulfites:c.containsSulfites,productItaly:c.productItaly,notes:c.notes};
+}
+function encodePublicData(c){
+  return btoa(unescape(encodeURIComponent(JSON.stringify(publicData(c))))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodePublicData(s){
+  try{
+    s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length%4)s+='=';
+    return JSON.parse(decodeURIComponent(escape(atob(s))));
+  }catch(e){return null;}
+}
+function qrPayload(c){
+  const base=(state.qrBaseUrl||'').trim();
+  if(base){
+    const sep=base.includes('?')?'&':'?';
+    return base+sep+'n='+encodeURIComponent(c.number||'');
+  }
+  return `Scheda contenitore\n${c.type} ${c.number}\nMatricola: ${c.serial||''}`;
+}
+function qrUrl(c,size=180){return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(qrPayload(c))}
+function filtered(){const q=(document.getElementById('search')?.value||'').toLowerCase();return state.containers.filter(c=>[c.type,c.number,c.serial,c.wineName,c.denomination,c.lot,c.idoneitaNo].join(' ').toLowerCase().includes(q)).sort((a,b)=>String(a.number).localeCompare(String(b.number),'it',{numeric:true}))}
+function renderList(){const arr=filtered();document.getElementById('cards').innerHTML=arr.map(c=>`<div class="card ${c.id===selectedId?'active':''}"><h3>${esc(titleC(c))}</h3><div class="sub">Matricola: <b>${esc(c.serial||'—')}</b></div><div class="badges"><span class="badge">${c.empty?'Vuota':'Piena'}</span><span class="badge">${esc(c.hl||'—')} hl</span></div><div class="sub">${esc(c.wineName||'—')}</div><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></div>`).join('')||'<div class="notice">Nessun contenitore.</div>'}
+function openContainer(id){selectedId=id;renderList();renderMain()}
+function showHome(){renderMain()}
+function renderMain(){const c=getC(); if(!c){document.getElementById('main').innerHTML='<div class="notice">Nessun contenitore.</div>';return}
+document.getElementById('main').innerHTML=`<div class="section-title"><h2>${esc(titleC(c))}</h2><div class="no-print"><button onclick="printSheet()">Stampa scheda</button><button onclick="printSingleQr()">Stampa QR</button><button onclick="printReadableLabel()">Stampa etichetta leggibile</button><button class="danger" onclick="emptyContainer()">Svuota scheda</button></div></div>
+<div class="notice ${c.empty?'':'ok'}">${c.empty?'Scheda vuota: compila i dati vino quando la cisterna viene caricata.':'Scheda compilata: il QR rimanda a questo contenitore.'}</div>
+<div class="grid"><div class="kpi"><label>Contenitore</label><div class="v">${esc(titleC(c))}</div></div><div class="kpi"><label>HL</label><div class="v">${esc(c.hl||'—')}</div></div><div class="kpi"><label>Vino</label><div class="v">${esc(c.wineName||'—')}</div></div><div class="kpi"><label>Idoneità</label><div class="v">${esc(c.idoneitaNo||'—')}</div></div></div>
+<div class="card"><h3>Dati contenitore</h3><div class="grid">${field('Tipo contenitore','type',c.type)}${field('Numero','number',c.number)}${field('Matricola','serial',c.serial)}${field('Capacità HL','capacity',c.capacity,'number')}${field('Anno','year',c.year)}</div></div>
+<div class="card"><h3>Dati vino</h3><div class="grid">${field('Data','date',c.date,'date')}${field('Annata','annata',c.annata)}${field('Litri','liters',c.liters,'number')}${field('HL','hl',c.hl,'number')}<div><label>Denominazione</label><select onchange="upd('denomination',this.value)">${opt(state.lists.denominations,c.denomination)}</select></div><div><label>Nome vino</label><select onchange="upd('wineName',this.value)">${opt(state.lists.wineNames,c.wineName)}</select></div><div><label>Gusto</label><select onchange="upd('taste',this.value)">${opt(state.lists.tastes||[],c.taste)}</select></div><div><label>Categoria</label><select onchange="upd('category',this.value)">${opt(state.lists.categories,c.category)}</select></div><div><label>Colore</label><select onchange="upd('color',this.value)">${opt(state.lists.colors,c.color)}</select></div>${field('Lotto / Partita','lot',c.lot)}${field('Idoneità n°','idoneitaNo',c.idoneitaNo)}${field('Data idoneità','idoneitaDate',c.idoneitaDate,'date')}<div><label>Contiene solfiti</label><select onchange="upd('containsSulfites',this.value==='true')"><option value="true" ${c.containsSulfites?'selected':''}>Sì</option><option value="false" ${!c.containsSulfites?'selected':''}>No</option></select></div><div><label>Prodotto in Italia</label><select onchange="upd('productItaly',this.value==='true')"><option value="true" ${c.productItaly?'selected':''}>Sì</option><option value="false" ${!c.productItaly?'selected':''}>No</option></select></div><div style="grid-column:1/-1"><label>Note</label><textarea onchange="upd('notes',this.value)">${esc(c.notes||'')}</textarea></div></div></div>
+<div class="card no-print"><h3>QR</h3><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><img class="qr-img" src="${qrUrl(c,360)}" alt="QR"><div><div class="sub">Contenuto QR: QR fisso per contenitore. Con URL base apre la scheda del numero indicato; senza URL base è solo testo.</div><code>${esc(qrPayload(c))}</code><label>URL base QR</label><input value="${esc(state.qrBaseUrl||'')}" onchange="state.qrBaseUrl=this.value;save();renderMain()" placeholder="link GitHub della pagina schede_qr_cisterne_v11.html"><button class="small" style="margin-top:6px" onclick="state.qrBaseUrl=location.href.split('?')[0];save();renderMain()">Usa URL corrente</button></div></div></div><div class="print-sheet" id="printSheet">${sheetHtml(c)}</div>`}
+function field(label,key,val,type='text'){return `<div><label>${label}</label><input type="${type}" value="${esc(val??'')}" onchange="upd('${key}',this.value)"></div>`}
+function upd(k,v){const c=getC();c[k]=v;if(k==='liters'&&v)c.hl=(Number(v)/100).toFixed(2);if(k==='hl'&&v)c.liters=Math.round(Number(v)*100);c.empty=false;c.updatedAt=new Date().toISOString();save();renderList();renderMain()}
+function newContainer(){const c=blankContainer(state.containers.length+1);state.containers.push(c);selectedId=c.id;save();renderList();renderMain()}
+function emptyContainer(){const c=getC();if(!confirm('Svuotare la scheda del contenitore? Restano tipo, numero, matricola e capacità.'))return;Object.assign(c,{date:today(),annata:'',liters:'',hl:'',denomination:'',wineName:'',category:'',color:'',taste:'',lot:'',idoneitaNo:'',idoneitaDate:'',containsSulfites:true,productItaly:true,notes:'',empty:true,updatedAt:new Date().toISOString()});save();renderList();renderMain()}
+function sheetHtml(c){
+  return `<div style="font-family:'Times New Roman',serif;padding:22px;max-width:820px;margin:auto;color:#111">
+    <div style="border:2px solid #222;padding:18px;min-height:980px">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;font-size:20px;margin-bottom:18px">
+        <div><b>DATA</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:180px">${esc(dateIT(c.date)||'')}</span></div>
+        <div><b>ANNATA</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:160px">${esc(c.annata||'')}</span></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1.2fr .7fr .7fr;gap:14px;font-size:22px;margin-bottom:22px">
+        <div><b>AUTOCLAVE/CISTERNA</b></div>
+        <div><b>N°</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:90px">${esc(c.number||'')}</span></div>
+        <div><b>LT</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:120px">${esc(c.liters||'')}</span></div>
+      </div>
+
+      <div style="font-size:21px;margin:22px 0 6px"><b>DENOMINAZIONE:</b></div>
+      <div style="font-size:24px;line-height:1.35;min-height:155px;text-transform:uppercase">
+        <div>${esc(c.denomination||'')}</div>
+        <div>${esc(c.color||'')}</div>
+        <div>${esc(c.category||'')}</div><div>${esc(c.taste||'')}</div>
+        <div>${c.productItaly?'PRODOTTO IN ITALIA':''}</div>
+        <div>${c.containsSulfites?'CONTIENE SOLFITI':''}</div>
+      </div>
+
+      <div style="font-size:22px;margin-top:24px">
+        <b>NOME</b>
+        <span style="border-bottom:1px dotted #333;display:inline-block;min-width:420px;margin-left:20px;text-transform:uppercase">${esc(c.wineName||'')}</span>
+      </div>
+
+      <div style="font-size:20px;margin-top:32px;display:grid;grid-template-columns:1fr 1fr;gap:20px">
+        <div><b>LOTTO / PARTITA N.</b><br><span style="border-bottom:1px dotted #333;display:inline-block;min-width:280px">${esc(c.lot||'')}</span></div>
+        <div><b>IDONEITÀ N.</b><br><span style="border-bottom:1px dotted #333;display:inline-block;min-width:260px">${esc(c.idoneitaNo||'')}</span></div>
+      </div>
+      <div style="font-size:20px;margin-top:14px">
+        <b>DATA IDONEITÀ</b>
+        <span style="border-bottom:1px dotted #333;display:inline-block;min-width:180px;margin-left:20px">${esc(dateIT(c.idoneitaDate)||'')}</span>
+      </div>
+
+      <div style="margin-top:34px;border-top:2px solid #222;padding-top:18px">
+        <h2 style="font-family:Arial,sans-serif;font-size:20px;margin:0 0 12px">DATI AUTOCLAVE / CISTERNA</h2>
+        <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:15px">
+          <tr><th style="border:1px solid #333;padding:7px;text-align:left">Tipo</th><td style="border:1px solid #333;padding:7px">${esc(c.type||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Numero</th><td style="border:1px solid #333;padding:7px">${esc(c.number||'')}</td></tr>
+          <tr><th style="border:1px solid #333;padding:7px;text-align:left">Matricola</th><td style="border:1px solid #333;padding:7px">${esc(c.serial||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Capacità</th><td style="border:1px solid #333;padding:7px">${esc(c.capacity||'')} HL</td></tr>
+          <tr><th style="border:1px solid #333;padding:7px;text-align:left">Anno</th><td style="border:1px solid #333;padding:7px">${esc(c.year||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Aggiornato</th><td style="border:1px solid #333;padding:7px">${esc(dateIT((c.updatedAt||'').slice(0,10))||'')}</td></tr>
+        </table>
+      </div>
+
+      <div style="margin-top:22px;font-family:Arial,sans-serif;font-size:15px">
+        <b>Note:</b> ${esc(c.notes||'')}
+      </div>
+    </div>
+  </div>`;
+}
+function printSheet(){window.print()}
+
+function readableLabelHtml(c, qrSize=210){
+  return `<div class="box">
+    <img src="${qrUrl(c,420)}" style="width:${qrSize}px;height:${qrSize}px"><br>
+    <b>${esc(titleC(c))}</b><br>
+    <div style="font-size:13px;margin-top:3px">Matricola: ${esc(c.serial||'—')}</div>
+    <hr>
+    <div style="font-size:14px;text-align:left;line-height:1.35">
+      <b>Vino:</b> ${esc(c.wineName||'—')}<br>
+      <b>Denominazione:</b> ${esc(c.denomination||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br>
+      <b>Lotto:</b> ${esc(c.lot||'—')}<br>
+      <b>HL:</b> ${esc(c.hl||'—')} · <b>Litri:</b> ${esc(c.liters||'—')}<br>
+      <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}<br>
+      ${c.containsSulfites?'<b>CONTIENE SOLFITI</b><br>':''}
+      ${c.productItaly?'<b>PRODOTTO IN ITALIA</b>':''}
+    </div>
+  </div>`;
+}
+function printReadableLabel(){
+  const c=getC();
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Etichetta ${esc(titleC(c))}</title><style>
+    body{font-family:Arial;text-align:center;margin:14px}
+    .box{border:1px solid #333;display:inline-block;padding:12px;width:8.5cm;min-height:12cm;text-align:center}
+    b{font-size:18px}
+    hr{border:0;border-top:1px solid #333;margin:8px 0}
+    @media print{body{margin:0}.box{page-break-inside:avoid}}
+  </style></head><body>${readableLabelHtml(c,230)}<script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+
+function printSingleQr(){
+  const c=getC();
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>QR ${esc(titleC(c))}</title><style>body{font-family:Arial;text-align:center;margin:20px}.box{border:1px solid #333;display:inline-block;padding:10px;width:7.5cm}img{width:220px;height:220px}b{font-size:20px}.txt{font-size:13px;text-align:left;margin-top:8px;line-height:1.35}</style></head><body><div class="box"><img src="${qrUrl(c,420)}"><br><b>${esc(titleC(c))}</b><br>Matricola: ${esc(c.serial||'')}<div class="txt"><b>Vino:</b> ${esc(c.wineName||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br><b>Lotto:</b> ${esc(c.lot||'—')}<br><b>HL:</b> ${esc(c.hl||'—')} · <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}</div></div><script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+function printQrLabels(){
+  const arr=state.containers.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number),'it',{numeric:true}));
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>QR contenitori</title><style>
+    body{font-family:Arial;margin:14px}
+    .labels{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
+    .label{border:1px solid #333;text-align:center;padding:10px;page-break-inside:avoid;min-height:8.5cm}
+    img{width:170px;height:170px}
+    b{font-size:18px}
+    .txt{font-size:12px;text-align:left;margin-top:5px;line-height:1.3}
+  </style></head><body><h1>QR contenitori</h1><div class="labels">${arr.map(c=>`<div class="label"><img src="${qrUrl(c,360)}"><br><b>${esc(titleC(c))}</b><br><small>Matricola: ${esc(c.serial||'')}</small><div class="txt"><b>Vino:</b> ${esc(c.wineName||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br><b>Lotto:</b> ${esc(c.lot||'—')}<br><b>HL:</b> ${esc(c.hl||'—')} · <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}</div></div>`).join('')}</div><script>setTimeout(()=>print(),800)<\/script></body></html>`);
+  w.document.close();
+}
+
+function groupTotals(rows, keyFn){
+  const map={};
+  rows.forEach(c=>{
+    const key=keyFn(c)||'—';
+    if(!map[key])map[key]={key,hl:0,liters:0,count:0};
+    map[key].hl+=Number(c.hl)||0;
+    map[key].liters+=Number(c.liters)||0;
+    map[key].count++;
+  });
+  return Object.values(map).sort((a,b)=>String(a.key).localeCompare(String(b.key),'it'));
+}
+function totalsTable(title, rows){
+  return `<h2>${esc(title)}</h2><div class="table-wrap"><table><thead><tr><th>Voce</th><th>N. contenitori</th><th>HL</th><th>Litri</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.key)}</b></td><td>${r.count}</td><td class="right">${fmt(r.hl)}</td><td class="right">${fmt(r.liters,0)}</td></tr>`).join('')||'<tr><td colspan="4">Nessun dato.</td></tr>'}</tbody></table></div>`;
+}
+
+function containerTotalsDetail(rows){
+  const sorted=rows.slice().sort((a,b)=>String(a.denomination||'').localeCompare(String(b.denomination||''),'it') || String(a.taste||'').localeCompare(String(b.taste||''),'it') || String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return `<h2>Dettaglio cisterne / autoclavi</h2>
+  <div class="table-wrap"><table><thead><tr>
+    <th>Contenitore</th><th>Matricola</th><th>Denominazione</th><th>Gusto</th><th>Nome vino</th><th>Lotto</th><th>HL</th><th>Litri</th>
+  </tr></thead><tbody>${sorted.map(c=>`<tr>
+    <td><b>${esc(c.type||'')} ${esc(c.number||'')}</b></td>
+    <td>${esc(c.serial||'')}</td>
+    <td>${esc(c.denomination||'—')}</td>
+    <td>${esc(c.taste||'—')}</td>
+    <td>${esc(c.wineName||'—')}</td>
+    <td>${esc(c.lot||'—')}</td>
+    <td class="right"><b>${fmt(c.hl)}</b></td>
+    <td class="right">${fmt(c.liters,0)}</td>
+  </tr>`).join('')||'<tr><td colspan="8">Nessun contenitore pieno.</td></tr>'}</tbody></table></div>`;
+}
+
+function showTotals(){
+  const rows=(state.containers||[]).filter(c=>!c.empty && ((Number(c.hl)||0)>0 || (Number(c.liters)||0)>0));
+  const totalHl=rows.reduce((s,c)=>s+(Number(c.hl)||0),0);
+  const totalLiters=rows.reduce((s,c)=>s+(Number(c.liters)||0),0);
+  const byDen=groupTotals(rows,c=>c.denomination||'Senza denominazione');
+  const byDenTaste=groupTotals(rows,c=>[c.denomination||'Senza denominazione',c.taste||'Senza gusto'].join(' · '));
+  const byTaste=groupTotals(rows,c=>c.taste||'Senza gusto');
+  document.getElementById('main').innerHTML=`<div class="section-title"><h2>Totali</h2><div><button onclick="printTotals()">Stampa totali</button><button onclick="renderMain()">Torna scheda</button></div></div>
+  <div class="grid"><div class="kpi"><label>Totale complessivo HL</label><div class="v">${fmt(totalHl)}</div></div><div class="kpi"><label>Totale litri</label><div class="v">${fmt(totalLiters,0)}</div></div><div class="kpi"><label>Contenitori pieni</label><div class="v">${rows.length}</div></div></div>
+  ${totalsTable('Totale per denominazione',byDen)}
+  ${totalsTable('Totale per denominazione + gusto',byDenTaste)}
+  ${totalsTable('Totale per gusto',byTaste)}
+  ${containerTotalsDetail(rows)}`;
+}
+function printTotals(){showTotals();setTimeout(()=>window.print(),200);}
+
+function openListsManager(){renderLists();document.getElementById('listModal').style.display='flex'}
+function closeListsManager(){document.getElementById('listModal').style.display='none';renderMain()}
+function renderSmallList(key,el){document.getElementById(el).innerHTML=(state.lists[key]||[]).map((v,i)=>`<div style="display:flex;gap:6px;margin:6px 0"><input value="${esc(v)}" onchange="state.lists['${key}'][${i}]=this.value;save();renderLists();renderMain()"><button class="small danger" onclick="state.lists['${key}'].splice(${i},1);save();renderLists();renderMain()">x</button></div>`).join('')}
+function renderLists(){renderSmallList('denominations','denList');renderSmallList('wineNames','nameList');renderSmallList('categories','catList');renderSmallList('colors','colorList');renderSmallList('tastes','tasteList')}
+function addListVal(key,inputId){const v=(document.getElementById(inputId).value||'').trim();if(!v)return;state.lists[key]=state.lists[key]||[];if(!state.lists[key].includes(v))state.lists[key].push(v);document.getElementById(inputId).value='';save();renderLists();renderMain()}
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dati_qr_cisterne.json';a.click()}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{state=JSON.parse(rd.result);save();selectedId=state.containers[0]?.id||null;renderList();renderMain();alert('Dati importati.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
+function publicCardHtml(c){
+  return `<div class="public-card">
+    <h1>${esc(titleC(c))}</h1>
+    <div class="sub">Matricola: ${esc(c.serial||'—')}</div>
+    <hr>
+    <p><b>Data:</b> ${esc(dateIT(c.date)||'—')} · <b>Annata:</b> ${esc(c.annata||'—')}</p>
+    <p><b>Vino:</b><br><span class="value">${esc(c.wineName||'—')}</span></p>
+    <p><b>Denominazione:</b><br>${esc(c.denomination||'—')}</p><p><b>Gusto:</b> ${esc(c.taste||'—')}</p>
+    <p><b>Lotto:</b> ${esc(c.lot||'—')}</p>
+    <p><b>HL:</b> <span class="value">${esc(c.hl||'—')}</span> · <b>Litri:</b> ${esc(c.liters||'—')}</p>
+    <p><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')} ${c.idoneitaDate?('del '+esc(dateIT(c.idoneitaDate))):''}</p>
+    <p><b>${c.productItaly?'PRODOTTO IN ITALIA':''}</b><br><b>${c.containsSulfites?'CONTIENE SOLFITI':''}</b></p>
+    <p><b>Note:</b> ${esc(c.notes||'')}</p><p style="margin-top:22px"><a href="https://cantinamanzini-byte.github.io/schede-qr-cisterne/" style="display:inline-block;background:#173f42;color:white;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:800">Apri elenco / Totali</a></p>
+  </div>`;
+}
+function publicCardHtml(c){
+  return `<div class="public-card">
+    <h1>${esc(titleC(c))}</h1>
+    <div class="sub">Matricola: ${esc(c.serial||'—')}</div>
+    <hr>
+    <p><b>Data:</b> ${esc(dateIT(c.date)||'—')} · <b>Annata:</b> ${esc(c.annata||'—')}</p>
+    <p><b>Vino:</b><br><span class="value">${esc(c.wineName||'—')}</span></p>
+    <p><b>Denominazione:</b><br>${esc(c.denomination||'—')}</p>
+    <p><b>Gusto:</b> ${esc(c.taste||'—')}</p>
+    <p><b>Lotto:</b> ${esc(c.lot||'—')}</p>
+    <p><b>HL:</b> <span class="value">${esc(c.hl||'—')}</span> · <b>Litri:</b> ${esc(c.liters||'—')}</p>
+    <p><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')} ${c.idoneitaDate?('del '+esc(dateIT(c.idoneitaDate))):''}</p>
+    <p><b>${c.productItaly?'PRODOTTO IN ITALIA':''}</b><br><b>${c.containsSulfites?'CONTIENE SOLFITI':''}</b></p>
+    <p><b>Note:</b> ${esc(c.notes||'')}</p><p style="margin-top:22px"><a href="https://cantinamanzini-byte.github.io/schede-qr-cisterne/" style="display:inline-block;background:#173f42;color:white;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:800">Apri elenco / Totali</a></p>
+  </div>`;
+}
+async function maybePublicView(){
+  const params=new URLSearchParams(location.search);
+  const id=params.get('id') || params.get('n');
+  if(!id)return false;
+  document.body.innerHTML='<div class="public-card"><h1>Caricamento scheda...</h1><p>Attendere.</p></div>';
+  let data=null;
+  try{data=await loadFromCloud();}catch(e){}
+  const list=(data&&data.containers)||state.containers||[];
+  const c=list.find(x=>x.id===id || String(x.number)===String(id));
+  if(!c){
+    document.body.innerHTML='<div class="public-card"><h1>Scheda non trovata</h1><p>Contenitore: '+esc(id)+'</p><p>Controlla il Google Sheet collegato.</p></div>';
+    return true;
+  }
+  document.body.innerHTML=publicCardHtml(c);
+  return true;
+}
+load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();renderMain();startCloud();}});
+</script>
+</body>
+</html>
