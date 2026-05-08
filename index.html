@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Schede QR Cisterne v17</title>
+<title>Schede QR Cisterne v19</title>
 <style>
 :root{--bg:#f5f1e8;--panel:#fffaf0;--line:#d6cab3;--soft:#e9dfcb;--ink:#28242a;--muted:#706873;--accent:#173f42;--danger:#7b274b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
@@ -30,7 +30,7 @@ label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:
 <body>
 <header>
   <div class="logo">QR</div>
-  <div><h1>Schede QR Cisterne</h1><div class="sub">v17 · classificazione DOP/IGP modificabile</div></div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v19 · sync sicura iPhone/computer</div></div>
   <div class="actions">
     <button onclick="goHome()">Home</button>
     <button onclick="openListsManager()">Liste vini</button><button onclick="showTotals()">Totali</button>
@@ -87,6 +87,20 @@ function newId(){return 'c'+Date.now()+Math.random().toString(16).slice(2)}
 function today(){return new Date().toISOString().slice(0,10)}
 function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
 function fmt(n,d=2){return (Number(n)||0).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function getRiempimento(c){
+  const hl=Number(c.hl)||0;
+  const capacity=Number(c.capacity)||0;
+  if(!hl || hl<=0 || c.empty) return 'Vuota';
+  if(!capacity || capacity<=0) return 'Piena';
+  const perc=Math.round((hl/capacity)*100);
+  return 'Piena '+perc+'%';
+}
+function getRiempimentoPerc(c){
+  const hl=Number(c.hl)||0;
+  const capacity=Number(c.capacity)||0;
+  if(!hl || hl<=0 || !capacity || capacity<=0) return 0;
+  return Math.round((hl/capacity)*100);
+}
 function dateIT(d){if(!d)return'';const p=String(d).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(d)}
 function opt(arr,val=''){return '<option value=""></option>'+arr.map(x=>`<option value="${esc(x)}" ${String(x)===String(val)?'selected':''}>${esc(x)}</option>`).join('')}
 function blankContainer(no=''){return {id:newId(),type:'Autoclave',number:String(no||''),serial:'',capacity:'',year:'',date:today(),annata:String(new Date().getFullYear()),liters:'',hl:'',denomination:'',classification:'',wineName:'',category:'',color:'Rosso',taste:'',lot:'',idoneitaNo:'',idoneitaDate:'',containsSulfites:true,productItaly:true,notes:'',empty:true,updatedAt:new Date().toISOString()}}
@@ -104,7 +118,62 @@ function normalizeCloudData(d){
   d=d||{};
   d.lists=d.lists||base.lists;
   d.containers=Array.isArray(d.containers)?d.containers:base.containers;
+  d.qrBaseUrl=d.qrBaseUrl||base.qrBaseUrl;
   return d;
+}
+function cloneData(x){return JSON.parse(JSON.stringify(x||{}));}
+function contKey(c){
+  const n=String(c?.number||'').trim();
+  return n ? 'numero:'+n : 'id:'+(c?.id||newId());
+}
+function hasUsefulContainerData(c){
+  if(!c)return false;
+  const vals=[c.serial,c.capacity,c.year,c.liters,c.hl,c.denomination,c.classification,c.wineName,c.category,c.color,c.taste,c.lot,c.idoneitaNo,c.idoneitaDate,c.notes];
+  return vals.some(v=>String(v??'').trim()!=='') || c.empty===false;
+}
+function chooseNewestContainer(a,b){
+  if(!a)return cloneData(b);
+  if(!b)return cloneData(a);
+  const au=hasUsefulContainerData(a), bu=hasUsefulContainerData(b);
+  if(au && !bu)return cloneData(a);
+  if(bu && !au)return cloneData(b);
+  const ta=Date.parse(a.updatedAt||0)||0;
+  const tb=Date.parse(b.updatedAt||0)||0;
+  return cloneData(tb>=ta?b:a);
+}
+function mergeLists(a={},b={}){
+  const base=defaultState().lists;
+  const out={};
+  Object.keys({...base,...a,...b}).forEach(k=>{
+    out[k]=[];
+    [...(base[k]||[]),...(a[k]||[]),...(b[k]||[])].forEach(v=>{
+      v=String(v??'').trim();
+      if(v && !out[k].includes(v))out[k].push(v);
+    });
+  });
+  return out;
+}
+function mergeStates(localState,cloudState){
+  const base=defaultState();
+  const local=normalizeCloudData(localState||{});
+  const cloud=normalizeCloudData(cloudState||{});
+  const map={};
+  [...(cloud.containers||[]),...(local.containers||[])].forEach(c=>{
+    const k=contKey(c);
+    map[k]=chooseNewestContainer(map[k],c);
+  });
+  const containers=Object.values(map).sort((a,b)=>String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return {
+    qrBaseUrl: local.qrBaseUrl || cloud.qrBaseUrl || base.qrBaseUrl,
+    lists: mergeLists(cloud.lists,local.lists),
+    containers
+  };
+}
+function nextContainerNumber(){
+  const nums=(state.containers||[]).map(c=>Number(c.number)).filter(n=>Number.isFinite(n));
+  let n=1;
+  while(nums.includes(n))n++;
+  return n;
 }
 function loadFromCloud(){
   return new Promise((resolve,reject)=>{
@@ -128,11 +197,18 @@ function loadFromCloud(){
 }
 async function saveToCloud(silent=true){
   try{
-    setSyncStatus('Salvataggio su Google Sheets...', 'warn');
+    setSyncStatus('Sincronizzazione con Google Sheets...', 'warn');
+    try{
+      const cloud=await loadFromCloud();
+      state=mergeStates(state,cloud);
+    }catch(e){
+      // Se il cloud non risponde, provo comunque a salvare la copia locale.
+    }
     localStorage.setItem(STORE,JSON.stringify(state));
     await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
     setSyncStatus('Sincronizzato con Google Sheets','ok');
-    if(!silent)alert('Dati salvati su Google Sheets.');
+    renderList();renderMain();
+    if(!silent)alert('Dati sincronizzati con Google Sheets.');
   }catch(e){
     setSyncStatus('Errore cloud: dati salvati solo su questo dispositivo','err');
     if(!silent)alert('Non sono riuscito a salvare su Google Sheets. Dati salvati solo sul dispositivo.');
@@ -140,25 +216,21 @@ async function saveToCloud(silent=true){
 }
 function scheduleCloudSync(){
   if(syncTimer)clearTimeout(syncTimer);
-  syncTimer=setTimeout(()=>saveToCloud(true),900);
+  syncTimer=setTimeout(()=>saveToCloud(true),1200);
 }
 async function startCloud(){
   setSyncStatus('Caricamento da Google Sheets...','warn');
   const localState=state;
   try{
     const cloud=await loadFromCloud();
-    if(cloud && cloud.containers && cloud.containers.length){
-      state=cloud;
-      localStorage.setItem(STORE,JSON.stringify(state));
-      selectedId=state.containers[0]?.id||null;
-      setSyncStatus('Dati caricati da Google Sheets','ok');
-      renderList();renderMain();
-    }else{
-      state=localState;
-      setSyncStatus('Google Sheets collegato, dati vuoti','ok');
-      renderList();renderMain();
-    }
+    state=mergeStates(localState,cloud);
+    localStorage.setItem(STORE,JSON.stringify(state));
+    selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
+    setSyncStatus('Dati caricati e uniti da Google Sheets','ok');
+    renderList();renderMain();
+    await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
   }catch(e){
+    state=localState;
     setSyncStatus('Cloud non raggiungibile: uso dati dispositivo','err');
     renderList();renderMain();
   }
@@ -224,19 +296,19 @@ function renderHomeScreen(){
   <div class="table-wrap"><table><thead><tr><th>Apri</th><th>Contenitore</th><th>Vino</th><th>Denominazione</th><th>Gusto</th><th>Lotto</th><th>HL</th><th>Aggiornato</th></tr></thead><tbody>${latest.map(c=>`<tr><td><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></td><td><b>${esc(titleC(c))}</b></td><td>${esc(c.wineName||'—')}</td><td>${esc(c.denomination||'—')}</td><td>${esc(c.taste||'—')}</td><td>${esc(c.lot||'—')}</td><td class="right"><b>${fmt(c.hl)}</b></td><td>${esc(dateIT((c.updatedAt||'').slice(0,10))||'—')}</td></tr>`).join('')||'<tr><td colspan="9">Nessuna scheda compilata.</td></tr>'}</tbody></table></div>`;
 }
 
-function renderList(){const arr=filtered();document.getElementById('cards').innerHTML=arr.map(c=>`<div class="card ${c.id===selectedId?'active':''}"><h3>${esc(titleC(c))}</h3><div class="sub">Matricola: <b>${esc(c.serial||'—')}</b></div><div class="badges"><span class="badge">${c.empty?'Vuota':'Piena'}</span><span class="badge">${esc(c.hl||'—')} hl</span></div><div class="sub">${esc(c.wineName||'—')}</div><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></div>`).join('')||'<div class="notice">Nessun contenitore.</div>'}
+function renderList(){const arr=filtered();document.getElementById('cards').innerHTML=arr.map(c=>`<div class="card ${c.id===selectedId?'active':''}"><h3>${esc(titleC(c))}</h3><div class="sub">Matricola: <b>${esc(c.serial||'—')}</b></div><div class="badges"><span class="badge">${esc(getRiempimento(c))}</span><span class="badge">${esc(c.hl||'—')} hl</span></div><div class="sub">${esc(c.wineName||'—')}</div><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></div>`).join('')||'<div class="notice">Nessun contenitore.</div>'}
 function openContainer(id){selectedId=id;renderList();renderMain()}
 function showHome(){renderList();renderHomeScreen()}
 function renderMain(){const c=getC(); if(!c){document.getElementById('main').innerHTML='<div class="notice">Nessun contenitore.</div>';return}
 document.getElementById('main').innerHTML=`<div class="section-title"><h2>${esc(titleC(c))}</h2><div class="no-print"><button onclick="printSheet()">Stampa scheda</button><button onclick="printSingleQr()">Stampa QR</button><button onclick="printReadableLabel()">Stampa etichetta leggibile</button><button onclick="openTransferModal()">Trasferisci dati</button><button class="danger" onclick="emptyContainer()">Svuota dati vino</button></div></div>
 <div class="notice ${c.empty?'':'ok'}">${c.empty?'Scheda vuota: compila i dati vino quando la cisterna viene caricata.':'Scheda compilata: il QR rimanda a questo contenitore.'}</div>
-<div class="grid"><div class="kpi"><label>Contenitore</label><div class="v">${esc(titleC(c))}</div></div><div class="kpi"><label>HL</label><div class="v">${esc(c.hl||'—')}</div></div><div class="kpi"><label>Vino</label><div class="v">${esc(c.wineName||'—')}</div></div><div class="kpi"><label>Idoneità</label><div class="v">${esc(c.idoneitaNo||'—')}</div></div></div>
+<div class="grid"><div class="kpi"><label>Contenitore</label><div class="v">${esc(titleC(c))}</div></div><div class="kpi"><label>HL</label><div class="v">${esc(c.hl||'—')}</div></div><div class="kpi"><label>Vino</label><div class="v">${esc(c.wineName||'—')}</div></div><div class="kpi"><label>Riempimento</label><div class="v">${esc(getRiempimento(c))}</div></div></div>
 <div class="card"><h3>Dati contenitore</h3><div class="grid">${field('Tipo contenitore','type',c.type)}${field('Numero','number',c.number)}${field('Matricola','serial',c.serial)}${field('Capacità HL','capacity',c.capacity,'number')}${field('Anno','year',c.year)}</div></div>
 <div class="card"><h3>Dati vino</h3><div class="grid">${field('Data','date',c.date,'date')}${field('Annata','annata',c.annata)}${field('Litri','liters',c.liters,'number')}${field('HL','hl',c.hl,'number')}<div><label>Denominazione</label><select onchange="upd('denomination',this.value)">${opt(state.lists.denominations,c.denomination)}</select></div><div><label>Atto/DOP/IGP</label><select onchange="upd('classification',this.value)">${opt(state.lists.classifications||[],c.classification)}</select></div><div><label>Nome vino</label><select onchange="upd('wineName',this.value)">${opt(state.lists.wineNames,c.wineName)}</select></div><div><label>Gusto</label><select onchange="upd('taste',this.value)">${opt(state.lists.tastes||[],c.taste)}</select></div><div><label>Categoria</label><select onchange="upd('category',this.value)">${opt(state.lists.categories,c.category)}</select></div><div><label>Colore</label><select onchange="upd('color',this.value)">${opt(state.lists.colors,c.color)}</select></div>${field('Lotto / Partita','lot',c.lot)}${field('Idoneità n°','idoneitaNo',c.idoneitaNo)}${field('Data idoneità','idoneitaDate',c.idoneitaDate,'date')}<div><label>Contiene solfiti</label><select onchange="upd('containsSulfites',this.value==='true')"><option value="true" ${c.containsSulfites?'selected':''}>Sì</option><option value="false" ${!c.containsSulfites?'selected':''}>No</option></select></div><div><label>Prodotto in Italia</label><select onchange="upd('productItaly',this.value==='true')"><option value="true" ${c.productItaly?'selected':''}>Sì</option><option value="false" ${!c.productItaly?'selected':''}>No</option></select></div><div style="grid-column:1/-1"><label>Note</label><textarea onchange="upd('notes',this.value)">${esc(c.notes||'')}</textarea></div></div></div>
 <div class="card no-print"><h3>QR</h3><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><img class="qr-img" src="${qrUrl(c,360)}" alt="QR"><div><div class="sub">Contenuto QR: QR fisso per contenitore. Con URL base apre la scheda del numero indicato; senza URL base è solo testo.</div><code>${esc(qrPayload(c))}</code><label>URL base QR</label><input value="${esc(state.qrBaseUrl||'')}" onchange="state.qrBaseUrl=this.value;save();renderMain()" placeholder="https://cantinamanzini-byte.github.io/schede-qr-cisterne/"><button class="small" style="margin-top:6px" onclick="state.qrBaseUrl=location.href.split('?')[0];save();renderMain()">Usa URL corrente</button></div></div></div><div class="print-sheet" id="printSheet">${sheetHtml(c)}</div>`}
 function field(label,key,val,type='text'){return `<div><label>${label}</label><input type="${type}" value="${esc(val??'')}" onchange="upd('${key}',this.value)"></div>`}
 function upd(k,v){const c=getC();c[k]=v;if(k==='liters'&&v)c.hl=(Number(v)/100).toFixed(2);if(k==='hl'&&v)c.liters=Math.round(Number(v)*100);c.empty=false;c.updatedAt=new Date().toISOString();save();renderList();renderMain()}
-function newContainer(){const c=blankContainer(state.containers.length+1);state.containers.push(c);selectedId=c.id;save();renderList();renderMain()}
+function newContainer(){const c=blankContainer(nextContainerNumber());state.containers.push(c);selectedId=c.id;save();renderList();renderMain()}
 
 function openTransferModal(){
   const c=getC();
@@ -257,7 +329,7 @@ function confirmTransferData(){
   selectedId=dest.id;save();closeTransferModal();renderList();renderMain();saveToCloud(true);
 }
 
-function emptyContainer(){const c=getC();const ok=prompt('Svuotare i dati vino di '+titleC(c)+'? Restano tipo, numero, matricola e capacità. Scrivi SVUOTA per confermare:');if(ok!=='SVUOTA')return;clearWineData(c);save();renderList();renderMain();saveToCloud(true)}
+function emptyContainer(){const c=getC();const ok=prompt('Svuotare i dati vino di '+titleC(c)+'? Restano tipo, numero, matricola e capacità. Scrivi SVUOTA per confermare:');if((ok||'').trim().toUpperCase()!=='SVUOTA')return;clearWineData(c);save();renderList();renderMain();saveToCloud(true)}
 function sheetHtml(c){
   return `<div style="font-family:'Times New Roman',serif;padding:22px;max-width:820px;margin:auto;color:#111">
     <div style="border:2px solid #222;padding:18px;min-height:980px">
@@ -300,6 +372,7 @@ function sheetHtml(c){
         <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:15px">
           <tr><th style="border:1px solid #333;padding:7px;text-align:left">Tipo</th><td style="border:1px solid #333;padding:7px">${esc(c.type||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Numero</th><td style="border:1px solid #333;padding:7px">${esc(c.number||'')}</td></tr>
           <tr><th style="border:1px solid #333;padding:7px;text-align:left">Matricola</th><td style="border:1px solid #333;padding:7px">${esc(c.serial||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Capacità</th><td style="border:1px solid #333;padding:7px">${esc(c.capacity||'')} HL</td></tr>
+          <tr><th style="border:1px solid #333;padding:7px;text-align:left">Riempimento</th><td style="border:1px solid #333;padding:7px">${esc(getRiempimento(c))}</td><th style="border:1px solid #333;padding:7px;text-align:left">% riempimento</th><td style="border:1px solid #333;padding:7px">${getRiempimentoPerc(c)||'—'}${getRiempimentoPerc(c)?'%':''}</td></tr>
           <tr><th style="border:1px solid #333;padding:7px;text-align:left">Anno</th><td style="border:1px solid #333;padding:7px">${esc(c.year||'')}</td><th style="border:1px solid #333;padding:7px;text-align:left">Aggiornato</th><td style="border:1px solid #333;padding:7px">${esc(dateIT((c.updatedAt||'').slice(0,10))||'')}</td></tr>
         </table>
       </div>
@@ -323,6 +396,7 @@ function readableLabelHtml(c, qrSize=210){
       <b>Denominazione:</b> ${esc(c.denomination||'—')}<br><b>Atto/DOP/IGP:</b> ${esc(c.classification||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br>
       <b>Lotto:</b> ${esc(c.lot||'—')}<br>
       <b>HL:</b> ${esc(c.hl||'—')} · <b>Litri:</b> ${esc(c.liters||'—')}<br>
+      <b>Riempimento:</b> ${esc(getRiempimento(c))}<br>
       <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}<br>
       ${c.containsSulfites?'<b>CONTIENE SOLFITI</b><br>':''}
       ${c.productItaly?'<b>PRODOTTO IN ITALIA</b>':''}
@@ -345,7 +419,7 @@ function printReadableLabel(){
 function printSingleQr(){
   const c=getC();
   const w=window.open('','_blank');
-  w.document.write(`<html><head><title>QR ${esc(titleC(c))}</title><style>body{font-family:Arial;text-align:center;margin:20px}.box{border:1px solid #333;display:inline-block;padding:10px;width:7.5cm}img{width:220px;height:220px}b{font-size:20px}.txt{font-size:13px;text-align:left;margin-top:8px;line-height:1.35}</style></head><body><div class="box"><img src="${qrUrl(c,420)}"><br><b>${esc(titleC(c))}</b><br>Matricola: ${esc(c.serial||'')}<div class="txt"><b>Vino:</b> ${esc(c.wineName||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br><b>Lotto:</b> ${esc(c.lot||'—')}<br><b>HL:</b> ${esc(c.hl||'—')} · <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}</div></div><script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.write(`<html><head><title>QR ${esc(titleC(c))}</title><style>body{font-family:Arial;text-align:center;margin:20px}.box{border:1px solid #333;display:inline-block;padding:10px;width:7.5cm}img{width:220px;height:220px}b{font-size:20px}.txt{font-size:13px;text-align:left;margin-top:8px;line-height:1.35}</style></head><body><div class="box"><img src="${qrUrl(c,420)}"><br><b>${esc(titleC(c))}</b><br>Matricola: ${esc(c.serial||'')}<div class="txt"><b>Vino:</b> ${esc(c.wineName||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br><b>Lotto:</b> ${esc(c.lot||'—')}<br><b>HL:</b> ${esc(c.hl||'—')} · <b>Riempimento:</b> ${esc(getRiempimento(c))}<br><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}</div></div><script>setTimeout(()=>print(),500)<\/script></body></html>`);
   w.document.close();
 }
 function printQrLabels(){printTipografiaQr()}
@@ -374,32 +448,40 @@ function totalsTable(title, rows){
 }
 
 function containerTotalsDetail(rows){
-  const sorted=rows.slice().sort((a,b)=>String(a.denomination||'').localeCompare(String(b.denomination||''),'it') || String(a.taste||'').localeCompare(String(b.taste||''),'it') || String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
-  return `<h2>Dettaglio cisterne / autoclavi</h2>
+  const sorted=rows.slice().sort((a,b)=>String(a.denomination||'').localeCompare(String(b.denomination||''),'it') || String(a.category||'').localeCompare(String(b.category||''),'it') || String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return `<h2>Totali della tabella / dettaglio cisterne</h2>
   <div class="table-wrap"><table><thead><tr>
-    <th>Contenitore</th><th>Matricola</th><th>Denominazione</th><th>Atto/DOP/IGP</th><th>Gusto</th><th>Nome vino</th><th>Lotto</th><th>HL</th><th>Litri</th>
+    <th>Contenitore</th><th>Matricola</th><th>Denominazione</th><th>Atto/DOP/IGP</th><th>Categoria</th><th>Colore</th><th>Gusto</th><th>Nome vino</th><th>Lotto</th><th>Riempimento</th><th>HL</th><th>Litri</th>
   </tr></thead><tbody>${sorted.map(c=>`<tr>
     <td><b>${esc(c.type||'')} ${esc(c.number||'')}</b></td>
     <td>${esc(c.serial||'')}</td>
     <td>${esc(c.denomination||'—')}</td>
     <td>${esc(c.classification||'—')}</td>
+    <td>${esc(c.category||'—')}</td>
+    <td>${esc(c.color||'—')}</td>
     <td>${esc(c.taste||'—')}</td>
     <td>${esc(c.wineName||'—')}</td>
     <td>${esc(c.lot||'—')}</td>
+    <td>${esc(getRiempimento(c))}</td>
     <td class="right"><b>${fmt(c.hl)}</b></td>
     <td class="right">${fmt(c.liters,0)}</td>
-  </tr>`).join('')||'<tr><td colspan="9">Nessun contenitore pieno.</td></tr>'}</tbody></table></div>`;
+  </tr>`).join('')||'<tr><td colspan="12">Nessun contenitore pieno.</td></tr>'}</tbody>
+  <tfoot><tr><th colspan="10" style="text-align:right">Totale generale tabella</th><th class="right">${fmt(sorted.reduce((s,c)=>s+(Number(c.hl)||0),0))}</th><th class="right">${fmt(sorted.reduce((s,c)=>s+(Number(c.liters)||0),0),0)}</th></tr></tfoot></table></div>`;
 }
 
 function showTotals(){
   const rows=(state.containers||[]).filter(c=>!c.empty && ((Number(c.hl)||0)>0 || (Number(c.liters)||0)>0));
   const totalHl=rows.reduce((s,c)=>s+(Number(c.hl)||0),0);
   const totalLiters=rows.reduce((s,c)=>s+(Number(c.liters)||0),0);
+  const byColor=groupTotals(rows,c=>c.color||'Senza colore');
+  const byCategory=groupTotals(rows,c=>c.category||'Senza categoria');
   const byDen=groupTotals(rows,c=>c.denomination||'Senza denominazione');
   const byDenTaste=groupTotals(rows,c=>[c.denomination||'Senza denominazione',c.taste||'Senza gusto'].join(' · '));
   const byTaste=groupTotals(rows,c=>c.taste||'Senza gusto');
   document.getElementById('main').innerHTML=`<div class="section-title"><h2>Totali</h2><div><button onclick="printTotals()">Stampa totali</button><button onclick="renderMain()">Torna scheda</button></div></div>
   <div class="grid"><div class="kpi"><label>Totale complessivo HL</label><div class="v">${fmt(totalHl)}</div></div><div class="kpi"><label>Totale litri</label><div class="v">${fmt(totalLiters,0)}</div></div><div class="kpi"><label>Contenitori pieni</label><div class="v">${rows.length}</div></div></div>
+  ${totalsTable('Totale per colore',byColor)}
+  ${totalsTable('Totale per categoria',byCategory)}
   ${totalsTable('Totale per denominazione',byDen)}
   ${totalsTable('Totale per denominazione + gusto',byDenTaste)}
   ${totalsTable('Totale per gusto',byTaste)}
@@ -413,7 +495,7 @@ function renderSmallList(key,el){document.getElementById(el).innerHTML=(state.li
 function renderLists(){renderSmallList('denominations','denList');renderSmallList('wineNames','nameList');renderSmallList('categories','catList');renderSmallList('classifications','classList');renderSmallList('colors','colorList');renderSmallList('tastes','tasteList')}
 function addListVal(key,inputId){const v=(document.getElementById(inputId).value||'').trim();if(!v)return;state.lists[key]=state.lists[key]||[];if(!state.lists[key].includes(v))state.lists[key].push(v);document.getElementById(inputId).value='';save();renderLists();renderMain()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dati_qr_cisterne.json';a.click()}
-function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{state=JSON.parse(rd.result);save();selectedId=state.containers[0]?.id||null;renderList();renderMain();alert('Dati importati.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const imported=JSON.parse(rd.result);state=mergeStates(state,imported);localStorage.setItem(STORE,JSON.stringify(state));selectedId=state.containers[0]?.id||null;renderList();renderMain();saveToCloud(true);alert('Dati importati e uniti con quelli esistenti.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
 function publicCardHtml(c){
   return `<div class="public-card">
     <h1>${esc(titleC(c))}</h1>
@@ -424,6 +506,7 @@ function publicCardHtml(c){
     <p><b>Denominazione:</b><br>${esc(c.denomination||'—')}</p><p><b>Atto/DOP/IGP:</b> ${esc(c.classification||'—')}</p><p><b>Gusto:</b> ${esc(c.taste||'—')}</p>
     <p><b>Lotto:</b> ${esc(c.lot||'—')}</p>
     <p><b>HL:</b> <span class="value">${esc(c.hl||'—')}</span> · <b>Litri:</b> ${esc(c.liters||'—')}</p>
+    <p><b>Riempimento:</b> <span class="value">${esc(getRiempimento(c))}</span></p>
     <p><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')} ${c.idoneitaDate?('del '+esc(dateIT(c.idoneitaDate))):''}</p>
     <p><b>${c.productItaly?'PRODOTTO IN ITALIA':''}</b><br><b>${c.containsSulfites?'CONTIENE SOLFITI':''}</b></p>
     <p><b>Note:</b> ${esc(c.notes||'')}</p><p style="margin-top:22px"><a href="https://cantinamanzini-byte.github.io/schede-qr-cisterne/" style="display:inline-block;background:#173f42;color:white;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:800">Apri elenco / Totali</a></p>
@@ -440,6 +523,7 @@ function publicCardHtml(c){
     <p><b>Gusto:</b> ${esc(c.taste||'—')}</p>
     <p><b>Lotto:</b> ${esc(c.lot||'—')}</p>
     <p><b>HL:</b> <span class="value">${esc(c.hl||'—')}</span> · <b>Litri:</b> ${esc(c.liters||'—')}</p>
+    <p><b>Riempimento:</b> <span class="value">${esc(getRiempimento(c))}</span></p>
     <p><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')} ${c.idoneitaDate?('del '+esc(dateIT(c.idoneitaDate))):''}</p>
     <p><b>${c.productItaly?'PRODOTTO IN ITALIA':''}</b><br><b>${c.containsSulfites?'CONTIENE SOLFITI':''}</b></p>
     <p><b>Note:</b> ${esc(c.notes||'')}</p><p style="margin-top:22px"><a href="https://cantinamanzini-byte.github.io/schede-qr-cisterne/" style="display:inline-block;background:#173f42;color:white;padding:12px 16px;border-radius:12px;text-decoration:none;font-weight:800">Apri elenco / Totali</a></p>
