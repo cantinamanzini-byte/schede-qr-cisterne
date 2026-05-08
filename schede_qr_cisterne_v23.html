@@ -209,40 +209,36 @@ async function saveToCloud(silent=true){
       if(!silent)alert('Salvataggio bloccato: su questo dispositivo i dati sembrano vuoti o incompleti. Premi prima “Ricarica da Google Sheets”.');
       return;
     }
+
     setSyncStatus('Controllo dati online prima del salvataggio...', 'warn');
     let cloud=null;
     try{ cloud=await loadFromCloud(); }catch(e){ cloud=null; }
+
     if(cloud){
       const localCount=countUsefulContainers(state);
       const cloudCount=countUsefulContainers(cloud);
+
       if(cloudCount>0 && localCount===0){
         setSyncStatus('Salvataggio bloccato: il telefono/PC ha dati vuoti, online ci sono dati.','err');
         if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Ricarica da Google Sheets.');
         return;
       }
-      if(!silent && cloudCount>localCount+3){
+
+      if(cloudCount>localCount+3){
         const ok=prompt('ATTENZIONE: online risultano più schede compilate di quelle presenti qui. Per salvare comunque scrivi SALVA:');
         if((ok||'').trim().toUpperCase()!=='SALVA'){
           setSyncStatus('Salvataggio annullato per sicurezza.','warn');
           return;
         }
       }
-      state=mergeStates(state,cloud);
     }
-    if(isStateDangerouslyEmpty(state)){
-      setSyncStatus('Salvataggio bloccato: dopo il controllo i dati risultano ancora vuoti.','err');
-      if(!silent)alert('Salvataggio bloccato: i dati risultano ancora vuoti o incompleti.');
-      return;
-    }
+
+    // v23: non unisco automaticamente con il cloud prima del salvataggio.
+    // Così evito che una copia vuota o vecchia faccia sparire i dati dalla schermata.
     localStorage.setItem(STORE,JSON.stringify(state));
     setSyncStatus('Salvataggio su Google Sheets...', 'warn');
     await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
     setSyncStatus('Salvato su Google Sheets','ok');
-    if(document.activeElement && ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){
-      // Non ridisegno mentre stai scrivendo o scegliendo da una tendina.
-    }else{
-      renderList();
-    }
     if(!silent)alert('Dati salvati su Google Sheets.');
   }catch(e){
     setSyncStatus('Errore cloud: dati salvati solo su questo dispositivo','err');
