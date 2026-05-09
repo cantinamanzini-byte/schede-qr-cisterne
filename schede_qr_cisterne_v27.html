@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Schede QR Cisterne v26</title>
+<title>Schede QR Cisterne v27</title>
 <style>
 :root{--bg:#f5f1e8;--panel:#fffaf0;--line:#d6cab3;--soft:#e9dfcb;--ink:#28242a;--muted:#706873;--accent:#173f42;--danger:#7b274b}
 *{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
@@ -25,26 +25,25 @@ label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:
 @media(max-width:900px){.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}aside{max-height:none}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
 @media print{header,aside,.no-print,.actions,.section-title button,.modal-back{display:none!important}body{background:white}.layout{display:block}main{padding:0}.print-sheet{display:block!important}}
 .print-sheet{display:none}
-.sync-box{background:#fff;border:1px solid #c8e6c9;border-radius:14px;padding:10px 12px;margin:10px 18px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sync-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#999;margin-right:6px}.sync-dot.ok{background:#2e7d32}.sync-dot.warn{background:#f57c00}.sync-dot.err{background:#c62828}.sync-text{font-size:13px;font-weight:800;color:#455a64}.save-panel{border:2px solid var(--accent);border-radius:14px;background:#fffdf6;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:end}.save-panel button{flex:1;min-width:120px}.save-panel .hint{font-size:12px;font-weight:800;color:var(--muted);width:100%}</style>
+.sync-box{background:#fff;border:1px solid #c8e6c9;border-radius:14px;padding:10px 12px;margin:10px 18px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sync-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#999;margin-right:6px}.sync-dot.ok{background:#2e7d32}.sync-dot.warn{background:#f57c00}.sync-dot.err{background:#c62828}.sync-text{font-size:13px;font-weight:800;color:#455a64}.guide-panel{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:12px;margin:12px 0}.guide-card{border:2px solid var(--line);border-radius:16px;background:#fffdf6;padding:12px}.guide-card.iphone{border-color:#2e7d32}.guide-card.computer{border-color:#173f42}.guide-card h3{margin:0 0 8px}.big-btn{display:block;width:100%;font-size:17px;padding:14px 16px;border-radius:14px;margin:8px 0}.big-btn.iphone{background:#2e7d32;border-color:#2e7d32;color:#fff}.big-btn.computer{background:#173f42;border-color:#173f42;color:#fff}.big-btn.warn{background:#fff3cd;border-color:#e0b84d;color:#3d3320}.btn-desc{font-size:13px;font-weight:800;color:var(--muted);line-height:1.35}.save-panel{border:2px solid #2e7d32;border-radius:14px;background:#fffdf6;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:end}.save-panel button{flex:1;min-width:160px}.save-panel .hint{font-size:12px;font-weight:800;color:var(--muted);width:100%}@media(max-width:700px){.guide-panel{grid-template-columns:1fr}.big-btn{font-size:16px}}</style>
 </head>
 <body>
 <header>
   <div class="logo">QR</div>
-  <div><h1>Schede QR Cisterne</h1><div class="sub">v26 · compila, poi salva la scheda</div></div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v27 · pulsanti guidati PC / iPhone</div></div>
   <div class="actions">
     <button onclick="goHome()">Home</button>
     <button onclick="openListsManager()">Liste vini</button><button onclick="showTotals()">Totali</button>
     <button onclick="printQrLabels()">Stampa QR</button><button onclick="printTypographyQr()">File tipografia QR</button>
-    <button onclick="refreshCurrentView()">Aggiorna vista</button>
-    <button onclick="ricaricaDaCloud()">Unisci da Google Sheets</button>
-    <button class="primary" onclick="saveToCloud(false)">Salva dati QR online</button>
+    <button class="primary" onclick="aggiornaDispositivo('computer')">💻 Aggiorna computer</button>
+    <button class="primary" onclick="salvaDaComputer()">💻 Salva da computer</button>
     <button onclick="document.getElementById('importFile').click()">Importa dati</button>
     <input id="importFile" type="file" accept="application/json,.json" style="display:none" onchange="importData(event)">
   </div>
 </header>
 <div class="sync-box">
   <div class="sync-text"><span id="syncDot" class="sync-dot"></span><span id="syncStatus">Google Sheets: avvio...</span></div>
-  <button class="small" onclick="ricaricaDaCloud()">Unisci da Google Sheets</button>
+  <button class="small" onclick="aggiornaDispositivo('iphone')">📱 Aggiorna iPhone</button>
 </div>
 <div id="app" class="layout">
   <aside>
@@ -113,7 +112,7 @@ function save(){localStorage.setItem(STORE,JSON.stringify(state));scheduleCloudS
 function refreshCurrentView(){renderList();renderMain();setSyncStatus('Vista aggiornata. Modifiche salvate su questo dispositivo.','ok')}
 function countUsefulContainers(st){return ((st&&st.containers)||[]).filter(hasUsefulContainerData).length}
 function isStateDangerouslyEmpty(st){return !st || !Array.isArray(st.containers) || st.containers.length<10 || countUsefulContainers(st)===0}
-function markLocalChange(){setSyncStatus('Modifica pronta. Scendi e premi “Salva scheda online”.','warn')}
+function markLocalChange(){setSyncStatus('Modifica pronta. Quando hai finito premi “📱 Salva da iPhone” nella scheda.','warn')}
 
 
 function ensureEditSnapshot(){
@@ -126,10 +125,10 @@ async function saveCurrentCardOnline(){
   c.updatedAt=new Date().toISOString();
   c.empty=!hasUsefulContainerData(c);
   localStorage.setItem(STORE,JSON.stringify(state));
-  setSyncStatus('Salvo questa scheda su Google Sheets...', 'warn');
+  setSyncStatus('Salvo da iPhone: invio online questa vasca...', 'warn');
   await saveToCloud(false);
   editSnapshots[c.id]=cloneData(c);
-  setSyncStatus('Scheda salvata. Puoi continuare o aprire un’altra vasca.','ok');
+  setSyncStatus('Salvato da iPhone. Sul computer premi “💻 Aggiorna computer” per vedere questa modifica.','ok');
 }
 function cancelCurrentCardChanges(){
   const c=getC();
@@ -148,7 +147,24 @@ function cancelCurrentCardChanges(){
   }
 }
 function saveButtonsHtml(){
-  return `<div class="save-panel"><button class="primary" onclick="saveCurrentCardOnline()">Salva scheda online</button><button class="danger" onclick="cancelCurrentCardChanges()">Annulla modifiche</button><div class="hint">Compila tutti i campi, poi premi Salva scheda online.</div></div>`;
+  return `<div class="save-panel"><button class="big-btn iphone" onclick="salvaDaIphone()">📱 Salva da iPhone</button><button class="danger" onclick="cancelCurrentCardChanges()">↩️ Annulla modifiche</button><button class="small" onclick="aggiornaDispositivo('iphone')">📱 Aggiorna iPhone</button><div class="hint"><b>Salva</b> quando hai modificato su questo iPhone. <b>Aggiorna</b> quando vuoi vedere le modifiche fatte dal computer.</div></div>`;
+}
+function guidePanelHtml(){
+  return `<div class="guide-panel no-print">
+    <div class="guide-card iphone"><h3>📱 Uso iPhone</h3><button class="big-btn iphone" onclick="aggiornaDispositivo('iphone')">📱 Aggiorna iPhone</button><div class="btn-desc">Prende online i dati salvati dal computer o da un altro dispositivo.</div><button class="big-btn iphone" onclick="salvaDaIphone()">📱 Salva da iPhone</button><div class="btn-desc">Salva online solo la vasca aperta che hai appena modificato.</div></div>
+    <div class="guide-card computer"><h3>💻 Uso computer</h3><button class="big-btn computer" onclick="aggiornaDispositivo('computer')">💻 Aggiorna computer</button><div class="btn-desc">Prende online i dati salvati dall’iPhone.</div><button class="big-btn computer" onclick="salvaDaComputer()">💻 Salva da computer</button><div class="btn-desc">Salva online tutto l’archivio: numeri, matricole, capacità, liste e schede.</div></div>
+  </div><div class="notice"><b>Regola semplice:</b> SALVA quando hai modificato su questo dispositivo. AGGIORNA quando vuoi vedere le modifiche fatte dall’altro dispositivo.</div>`;
+}
+async function aggiornaDispositivo(tipo){
+  await ricaricaDaCloud(tipo);
+}
+async function salvaDaComputer(){
+  const ok=confirm('Salva da computer: verrà salvato online tutto l’archivio completo. Confermi?');
+  if(!ok)return;
+  await saveToCloud(false);
+}
+async function salvaDaIphone(){
+  await saveCurrentCardOnline();
 }
 
 function setSyncStatus(text,tipo=''){
@@ -214,7 +230,7 @@ function mergeStates(localState,cloudState){
 }
 
 function chooseLocalProtected(localC, cloudC){
-  // Protezione Stefano: quando premi “Unisci da Google Sheets”, i dati già scritti
+  // Protezione Stefano: quando premi “Aggiorna da Google Sheets”, i dati già scritti
   // su questo PC/iPhone NON vengono mai cancellati da una copia online vuota o diversa.
   const lu=hasUsefulContainerData(localC), cu=hasUsefulContainerData(cloudC);
   if(lu) return cloneData(localC);
@@ -268,8 +284,8 @@ async function saveToCloud(silent=true){
   try{
     // Protezione principale: non salvare mai una lista locale vuota o incompleta sopra Google Sheets.
     if(isStateDangerouslyEmpty(state)){
-      setSyncStatus('Salvataggio bloccato: dati locali vuoti o incompleti. Unisci da Google Sheets.','err');
-      if(!silent)alert('Salvataggio bloccato: su questo dispositivo i dati sembrano vuoti o incompleti. Premi prima “Unisci da Google Sheets”.');
+      setSyncStatus('Salvataggio bloccato: dati locali vuoti o incompleti. Aggiorna da Google Sheets.','err');
+      if(!silent)alert('Salvataggio bloccato: su questo dispositivo i dati sembrano vuoti o incompleti. Premi prima “Aggiorna iPhone” o “Aggiorna computer”.');
       return;
     }
     setSyncStatus('Controllo dati online prima del salvataggio...', 'warn');
@@ -280,7 +296,7 @@ async function saveToCloud(silent=true){
       const cloudCount=countUsefulContainers(cloud);
       if(cloudCount>0 && localCount===0){
         setSyncStatus('Salvataggio bloccato: il telefono/PC ha dati vuoti, online ci sono dati.','err');
-        if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Unisci da Google Sheets.');
+        if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Aggiorna da Google Sheets.');
         return;
       }
       if(!silent && cloudCount>localCount+3){
@@ -332,8 +348,9 @@ async function startCloud(){
     renderList();renderMain();
   }
 }
-async function ricaricaDaCloud(){
-  setSyncStatus('Unione da Google Sheets...', 'warn');
+async function ricaricaDaCloud(tipo='dispositivo'){
+  const nome=tipo==='iphone'?'iPhone':(tipo==='computer'?'computer':'dispositivo');
+  setSyncStatus('Aggiorno '+nome+' da Google Sheets...', 'warn');
   try{
     const cloud=await loadFromCloud();
     const prima=countUsefulContainers(state);
@@ -347,11 +364,11 @@ async function ricaricaDaCloud(){
     editSnapshots={};
     localStorage.setItem(STORE,JSON.stringify(state));
     selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
-    setSyncStatus('Unito da Google Sheets senza cancellare i dati locali','ok');
+    setSyncStatus('Aggiornato '+nome+' da Google Sheets','ok');
     renderList();renderMain();
-    alert('Dati uniti da Google Sheets. I dati già inseriti su questo dispositivo non sono stati cancellati. Prima: '+prima+' schede compilate qui, online: '+online+'.');
+    alert('Aggiornamento completato. Prima: '+prima+' schede compilate qui, online: '+online+'.');
   }catch(e){
-    setSyncStatus('Non riesco a unire da Google Sheets','err');
+    setSyncStatus('Non riesco ad aggiornare da Google Sheets','err');
     alert('Non riesco a collegarmi a Google Sheets. Controlla la connessione e riprova.');
   }
 }
@@ -414,6 +431,7 @@ function renderHomeScreen(){
   const totalLiters=rows.reduce((s,c)=>s+(Number(c.liters)||0),0);
   const latest=rows.slice(0,12);
   document.getElementById('main').innerHTML=`<div class="section-title"><h2>Home Schede QR</h2><div><button onclick="showTotals()">Totali</button><button onclick="printTipografiaQr()">File tipografia QR</button></div></div>
+  ${guidePanelHtml()}
   <div class="grid"><div class="kpi"><label>Contenitori compilati</label><div class="v">${rows.length}</div></div><div class="kpi"><label>Totale HL</label><div class="v">${fmt(totalHl)}</div></div><div class="kpi"><label>Totale litri</label><div class="v">${fmt(totalLiters,0)}</div></div></div>
   <div class="notice"><b>Ultime schede compilate/modificate</b> - le piu recenti compaiono prima.</div>
   <div class="table-wrap"><table><thead><tr><th>Apri</th><th>Contenitore</th><th>Vino</th><th>Denominazione</th><th>Gusto</th><th>Lotto</th><th>HL</th><th>Aggiornato</th></tr></thead><tbody>${latest.map(c=>`<tr><td><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></td><td><b>${esc(titleC(c))}</b></td><td>${esc(c.wineName||'—')}</td><td>${esc(c.denomination||'—')}</td><td>${esc(c.taste||'—')}</td><td>${esc(c.lot||'—')}</td><td class="right"><b>${fmt(c.hl)}</b></td><td>${esc(dateIT((c.updatedAt||'').slice(0,10))||'—')}</td></tr>`).join('')||'<tr><td colspan="9">Nessuna scheda compilata.</td></tr>'}</tbody></table></div>`;
@@ -426,6 +444,7 @@ function renderMain(){const c=getC(); if(!c){document.getElementById('main').inn
 ensureEditSnapshot();
 document.getElementById('main').innerHTML=`<div class="section-title"><h2>${esc(titleC(c))}</h2><div class="no-print"><button onclick="printSheet()">Stampa scheda</button><button onclick="printSingleQr()">Stampa QR</button><button onclick="printReadableLabel()">Stampa etichetta leggibile</button><button onclick="openTransferModal()">Trasferisci dati</button><button class="danger" onclick="emptyContainer()">Svuota dati vino</button></div></div>
 <div class="notice ${c.empty?'':'ok'}">${c.empty?'Scheda vuota: compila i dati vino quando la cisterna viene caricata.':'Scheda compilata: il QR rimanda a questo contenitore.'}</div>
+${guidePanelHtml()}
 <div class="grid"><div class="kpi"><label>Contenitore</label><div class="v">${esc(titleC(c))}</div></div><div class="kpi"><label>HL</label><div class="v">${esc(c.hl||'—')}</div></div><div class="kpi"><label>Vino</label><div class="v">${esc(c.wineName||'—')}</div></div><div class="kpi"><label>Riempimento</label><div class="v">${esc(getRiempimento(c))}</div></div></div>
 <div class="card"><h3>Dati contenitore</h3><div class="grid">${field('Tipo contenitore','type',c.type)}${field('Numero','number',c.number)}${field('Matricola','serial',c.serial)}${field('Capacità HL','capacity',c.capacity,'number')}${field('Anno','year',c.year)}</div></div>
 <div class="card"><h3>Dati vino</h3><div class="grid">${field('Data','date',c.date,'date')}${field('Annata','annata',c.annata)}${field('Litri','liters',c.liters,'number')}${field('HL','hl',c.hl,'number')}<div><label>Denominazione</label><select onchange="upd('denomination',this.value)">${opt(state.lists.denominations,c.denomination)}</select></div><div><label>Atto/DOP/IGP</label><select onchange="upd('classification',this.value)">${opt(state.lists.classifications||[],c.classification)}</select></div><div><label>Nome vino</label><select onchange="upd('wineName',this.value)">${opt(state.lists.wineNames,c.wineName)}</select></div><div><label>Gusto</label><select onchange="upd('taste',this.value)">${opt(state.lists.tastes||[],c.taste)}</select></div><div><label>Categoria</label><select onchange="upd('category',this.value)">${opt(state.lists.categories,c.category)}</select></div><div><label>Colore</label><select onchange="upd('color',this.value)">${opt(state.lists.colors,c.color)}</select></div>${field('Lotto / Partita','lot',c.lot)}${field('Idoneità n°','idoneitaNo',c.idoneitaNo)}${field('Data idoneità','idoneitaDate',c.idoneitaDate,'date')}<div><label>Contiene solfiti</label><select onchange="upd('containsSulfites',this.value==='true')"><option value="true" ${c.containsSulfites?'selected':''}>Sì</option><option value="false" ${!c.containsSulfites?'selected':''}>No</option></select></div><div><label>Prodotto in Italia</label><select onchange="upd('productItaly',this.value==='true')"><option value="true" ${c.productItaly?'selected':''}>Sì</option><option value="false" ${!c.productItaly?'selected':''}>No</option></select></div><div>${saveButtonsHtml()}</div><div style="grid-column:1/-1"><label>Note</label><textarea oninput="upd('notes',this.value)" onchange="upd('notes',this.value)">${esc(c.notes||'')}</textarea></div></div></div>
@@ -450,10 +469,10 @@ function confirmTransferData(){
   wineDataFields().forEach(k=>dest[k]=JSON.parse(JSON.stringify(src[k])));
   dest.empty=false;dest.updatedAt=new Date().toISOString();
   if(document.getElementById('transferMode').value==='move')clearWineData(src);
-  selectedId=dest.id;save();closeTransferModal();renderList();renderMain();setSyncStatus('Trasferimento salvato su questo dispositivo. Premi Salva dati QR online per inviarlo al cloud.','warn');
+  selectedId=dest.id;save();closeTransferModal();renderList();renderMain();setSyncStatus('Trasferimento salvato su questo dispositivo. Premi il pulsante giusto: “📱 Salva da iPhone” nella scheda oppure “💻 Salva da computer” se stai lavorando da PC.','warn');
 }
 
-function emptyContainer(){const c=getC();const ok=prompt('Svuotare i dati vino di '+titleC(c)+'? Restano tipo, numero, matricola e capacità. Scrivi SVUOTA per confermare:');if((ok||'').trim().toUpperCase()!=='SVUOTA')return;clearWineData(c);save();renderList();renderMain();setSyncStatus('Svuotamento salvato su questo dispositivo. Premi Salva dati QR online per inviarlo al cloud.','warn')}
+function emptyContainer(){const c=getC();const ok=prompt('Svuotare i dati vino di '+titleC(c)+'? Restano tipo, numero, matricola e capacità. Scrivi SVUOTA per confermare:');if((ok||'').trim().toUpperCase()!=='SVUOTA')return;clearWineData(c);save();renderList();renderMain();setSyncStatus('Svuotamento salvato su questo dispositivo. Premi il pulsante giusto: “📱 Salva da iPhone” nella scheda oppure “💻 Salva da computer” se stai lavorando da PC.','warn')}
 function sheetHtml(c){
   return `<div style="font-family:'Times New Roman',serif;padding:22px;max-width:820px;margin:auto;color:#111">
     <div style="border:2px solid #222;padding:18px;min-height:980px">
@@ -619,7 +638,7 @@ function renderSmallList(key,el){document.getElementById(el).innerHTML=(state.li
 function renderLists(){renderSmallList('denominations','denList');renderSmallList('wineNames','nameList');renderSmallList('categories','catList');renderSmallList('classifications','classList');renderSmallList('colors','colorList');renderSmallList('tastes','tasteList')}
 function addListVal(key,inputId){const v=(document.getElementById(inputId).value||'').trim();if(!v)return;state.lists[key]=state.lists[key]||[];if(!state.lists[key].includes(v))state.lists[key].push(v);document.getElementById(inputId).value='';save();renderLists();renderMain()}
 function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='dati_qr_cisterne.json';a.click()}
-function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const imported=JSON.parse(rd.result);state=mergeStates(state,imported);localStorage.setItem(STORE,JSON.stringify(state));selectedId=state.containers[0]?.id||null;renderList();renderMain();setSyncStatus('Dati importati su questo dispositivo. Premi Salva dati QR online per inviarli al cloud.','warn');alert('Dati importati e uniti con quelli esistenti. Controlla e poi premi Salva dati QR online.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const imported=JSON.parse(rd.result);state=mergeStates(state,imported);localStorage.setItem(STORE,JSON.stringify(state));selectedId=state.containers[0]?.id||null;renderList();renderMain();setSyncStatus('Dati importati su questo dispositivo. Premi “💻 Salva da computer” per inviarli online.','warn');alert('Dati importati e uniti con quelli esistenti. Controlla e poi premi “💻 Salva da computer”.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
 function publicCardHtml(c){
   return `<div class="public-card">
     <h1>${esc(titleC(c))}</h1>
@@ -653,7 +672,7 @@ async function maybePublicView(){
   document.body.innerHTML=publicCardHtml(c);
   return true;
 }
-load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();setSyncStatus('Avvio sicuro: compila la scheda, poi premi “Salva scheda online”.','warn');}});
+load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();setSyncStatus('Avvio sicuro. SALVA quando hai modificato qui. AGGIORNA quando vuoi vedere modifiche fatte dall’altro dispositivo.','warn');}});
 </script>
 </body>
 </html>
