@@ -31,7 +31,7 @@ label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:
 <body>
 <header>
   <div class="logo">QR</div>
-  <div><h1>Schede QR Cisterne</h1><div class="sub">v31 · QR solo scheda, niente elenco</div></div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v32 · HL e litri immediati</div></div>
   <div class="actions">
     <button onclick="goHome()">Home</button>
     <button class="primary" onclick="salvaOnline()">💾 Salva</button>
@@ -486,8 +486,31 @@ ${guidePanelHtml()}
 <div class="card"><h3>Dati contenitore</h3><div class="grid">${field('Tipo contenitore','type',c.type)}${field('Numero','number',c.number)}${field('Matricola','serial',c.serial)}${field('Capacità HL','capacity',c.capacity,'number')}${field('Anno','year',c.year)}</div></div>
 <div class="card"><h3>Dati vino</h3><div class="grid">${field('Data','date',c.date,'date')}${field('Annata','annata',c.annata)}${field('Litri','liters',c.liters,'number')}${field('HL','hl',c.hl,'number')}<div><label>Denominazione</label><select onchange="upd('denomination',this.value)">${opt(state.lists.denominations,c.denomination)}</select></div><div><label>Atto/DOP/IGP</label><select onchange="upd('classification',this.value)">${opt(state.lists.classifications||[],c.classification)}</select></div><div><label>Nome vino</label><select onchange="upd('wineName',this.value)">${opt(state.lists.wineNames,c.wineName)}</select></div><div><label>Gusto</label><select onchange="upd('taste',this.value)">${opt(state.lists.tastes||[],c.taste)}</select></div><div><label>Categoria</label><select onchange="upd('category',this.value)">${opt(state.lists.categories,c.category)}</select></div><div><label>Colore</label><select onchange="upd('color',this.value)">${opt(state.lists.colors,c.color)}</select></div>${field('Lotto / Partita','lot',c.lot)}${field('Idoneità n°','idoneitaNo',c.idoneitaNo)}${field('Data idoneità','idoneitaDate',c.idoneitaDate,'date')}<div><label>Contiene solfiti</label><select onchange="upd('containsSulfites',this.value==='true')"><option value="true" ${c.containsSulfites?'selected':''}>Sì</option><option value="false" ${!c.containsSulfites?'selected':''}>No</option></select></div><div><label>Prodotto in Italia</label><select onchange="upd('productItaly',this.value==='true')"><option value="true" ${c.productItaly?'selected':''}>Sì</option><option value="false" ${!c.productItaly?'selected':''}>No</option></select></div><div>${saveButtonsHtml()}</div><div style="grid-column:1/-1"><label>Note</label><textarea oninput="upd('notes',this.value)" onchange="upd('notes',this.value)">${esc(c.notes||'')}</textarea></div></div></div>
 <div class="card no-print"><h3>QR</h3><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><img class="qr-img" src="${qrUrl(c,360)}" alt="QR"><div><div class="sub">Contenuto QR: QR fisso per contenitore. Con URL base apre la scheda del numero indicato; senza URL base è solo testo.</div><code>${esc(qrPayload(c))}</code><label>URL base QR</label><input value="${esc(state.qrBaseUrl||'')}" onchange="state.qrBaseUrl=this.value;save();" placeholder="https://cantinamanzini-byte.github.io/schede-qr-cisterne/"><button class="small" style="margin-top:6px" onclick="state.qrBaseUrl=location.href.split('?')[0];save();renderMain()">Usa URL corrente</button></div></div></div><div class="print-sheet" id="printSheet">${sheetHtml(c)}</div>`}
-function field(label,key,val,type='text'){return `<div><label>${label}</label><input type="${type}" value="${esc(val??'')}" oninput="upd('${key}',this.value)" onchange="upd('${key}',this.value)"></div>`}
-function upd(k,v){const c=getC();if(!c)return;c[k]=v;if(k==='liters'&&v)c.hl=(Number(v)/100).toFixed(2);if(k==='hl'&&v)c.liters=Math.round(Number(v)*100);c.empty=false;c.updatedAt=new Date().toISOString();save();}
+function field(label,key,val,type='text'){return `<div><label>${label}</label><input data-key="${esc(key)}" type="${type}" value="${esc(val??'')}" oninput="upd('${key}',this.value)" onchange="upd('${key}',this.value)"></div>`}
+function parseNumIT(v){
+  const n=Number(String(v??'').trim().replace(/\./g,'').replace(',','.'));
+  return Number.isFinite(n)?n:0;
+}
+function setInputValue(key,val){
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(el=>{
+    if(document.activeElement!==el) el.value=val??'';
+  });
+}
+function upd(k,v){
+  const c=getC();if(!c)return;
+  c[k]=v;
+  if(k==='liters'){
+    if(String(v??'').trim()==='') c.hl='';
+    else c.hl=(parseNumIT(v)/100).toFixed(2);
+    setInputValue('hl',c.hl);
+  }
+  if(k==='hl'){
+    if(String(v??'').trim()==='') c.liters='';
+    else c.liters=String(Math.round(parseNumIT(v)*100));
+    setInputValue('liters',c.liters);
+  }
+  c.empty=false;c.updatedAt=new Date().toISOString();save();
+}
 function newContainer(){const c=blankContainer(nextContainerNumber());state.containers.push(c);selectedId=c.id;save();renderList();renderMain()}
 
 function openTransferModal(){
