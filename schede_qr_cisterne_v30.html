@@ -150,7 +150,7 @@ async function saveCurrentCardOnline(){
     editSnapshots[selectedId]=cloneData(getC());
     renderList();renderMain();
     setSyncStatus('Salvato online.','ok');
-    alert('Salvato online. L’altro dispositivo caricherà questa modifica all’apertura. Usa “Ricarica dati online” solo se il caricamento ritarda.');
+    alert('Salvato. Sul computer premi “Ricarica dati online” per vedere questa modifica.');
   }catch(e){
     setSyncStatus('Errore: non riesco a salvare questa vasca online.','err');
     alert('Non riesco a collegarmi a Google Sheets. La modifica resta salvata solo su questo dispositivo.');
@@ -333,7 +333,7 @@ async function saveToCloud(silent=true){
       const cloudCount=countUsefulContainers(cloud);
       if(cloudCount>0 && localCount===0){
         setSyncStatus('Salvataggio bloccato: il telefono/PC ha dati vuoti, online ci sono dati.','err');
-        if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Prima attendi il caricamento automatico oppure usa “Ricarica dati online”.');
+        if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Ricarica dati online.');
         return;
       }
       if(!silent && cloudCount>localCount+3){
