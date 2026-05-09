@@ -31,7 +31,7 @@ label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:
 <body>
 <header>
   <div class="logo">QR</div>
-  <div><h1>Schede QR Cisterne</h1><div class="sub">v32 · HL e litri immediati</div></div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v33 · carica Google senza schede vuote</div></div>
   <div class="actions">
     <button onclick="goHome()">Home</button>
     <button class="primary" onclick="salvaOnline()">💾 Salva</button>
@@ -223,7 +223,10 @@ function contKey(c){
 }
 function hasUsefulContainerData(c){
   if(!c)return false;
-  const vals=[c.serial,c.capacity,c.year,c.liters,c.hl,c.denomination,c.classification,c.wineName,c.category,c.color,c.taste,c.lot,c.idoneitaNo,c.idoneitaDate,c.notes];
+  // Non considero utili i campi predefiniti di una scheda vuota
+  // (data, annata, colore Rosso, contiene solfiti, prodotto in Italia).
+  // Così un telefono/PC vuoto non prevale sui dati veri di Google Sheets.
+  const vals=[c.serial,c.capacity,c.year,c.liters,c.hl,c.denomination,c.classification,c.wineName,c.category,c.taste,c.lot,c.idoneitaNo,c.idoneitaDate,c.notes];
   return vals.some(v=>String(v??'').trim()!=='') || c.empty===false;
 }
 function chooseNewestContainer(a,b){
@@ -370,14 +373,20 @@ function scheduleCloudSync(){
   syncTimer=setTimeout(()=>{markLocalChange();},500);
 }
 async function startCloud(){
-  setSyncStatus('Caricamento da Google Sheets...','warn');
+  setSyncStatus('Caricamento automatico da Google Sheets...','warn');
   const localState=state;
   try{
     const cloud=await loadFromCloud();
-    state=mergeStatesKeepLocal(localState,cloud);
+    const online=countUsefulContainers(cloud);
+    const locali=countUsefulContainers(localState);
+    if(online>0 && locali===0){
+      state=normalizeCloudData(cloud);
+    }else{
+      state=mergeStatesKeepLocal(localState,cloud);
+    }
     localStorage.setItem(STORE,JSON.stringify(state));
     selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
-    setSyncStatus('Dati caricati da Google Sheets','ok');
+    setSyncStatus('Dati caricati automaticamente da Google Sheets','ok');
     renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();
   }catch(e){
     state=localState;
@@ -397,7 +406,11 @@ async function ricaricaDaCloud(tipo='dispositivo'){
       alert('Google Sheets sembra vuoto. Non cancello i dati presenti su questo dispositivo.');
       return;
     }
-    state=mergeStatesKeepLocal(state,cloud);
+    if(online>0 && countUsefulContainers(state)===0){
+      state=normalizeCloudData(cloud);
+    }else{
+      state=mergeStatesKeepLocal(state,cloud);
+    }
     editSnapshots={};
     localStorage.setItem(STORE,JSON.stringify(state));
     selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
@@ -733,7 +746,7 @@ async function maybePublicView(){
   document.body.innerHTML=publicCardHtml(c);
   return true;
 }
-load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();startCloud();}});
+load();maybePublicView().then(isPublic=>{if(!isPublic){document.getElementById('cards').innerHTML='<div class="notice">Caricamento dati online...</div>';document.getElementById('main').innerHTML='<div class="notice"><b>Caricamento da Google Sheets...</b><br>Attendi: il programma sta prendendo gli ultimi dati salvati online.</div>';startCloud();}});
 </script>
 </body>
 </html>
