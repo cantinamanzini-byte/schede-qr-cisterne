@@ -1,1 +1,942 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Schede QR Cisterne v51</title>
+<style>
+:root{--bg:#f5f1e8;--panel:#fffaf0;--line:#d6cab3;--soft:#e9dfcb;--ink:#28242a;--muted:#706873;--accent:#173f42;--danger:#7b274b}
+*{box-sizing:border-box}body{margin:0;background:var(--bg);color:var(--ink);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;font-size:15px}
+header{position:sticky;top:0;background:var(--bg);border-bottom:1px solid var(--line);z-index:10;padding:12px 16px;display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.logo{width:46px;height:46px;border-radius:12px;background:linear-gradient(135deg,#5d0b25,#173f42);color:#fff7df;display:grid;place-items:center;font-weight:900}
+h1{font-size:20px;margin:0}.sub{font-size:12px;color:var(--muted)}.actions{margin-left:auto;display:flex;gap:8px;flex-wrap:wrap}
+button{border:1px solid var(--line);background:#fff8e8;border-radius:10px;padding:9px 12px;font-weight:800;cursor:pointer;color:var(--ink)}
+button.primary{background:var(--accent);border-color:var(--accent);color:white}button.danger{background:var(--danger);border-color:var(--danger);color:white}button.small{padding:5px 8px;font-size:12px}
+.layout{display:grid;grid-template-columns:310px 1fr;min-height:calc(100vh - 72px)}aside{background:#eee5d3;border-right:1px solid var(--line);padding:12px;overflow:auto;max-height:calc(100vh - 72px)}main{padding:18px;overflow:auto}
+input,select,textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:#fffdf6;padding:10px 11px;font-size:15px;color:var(--ink)}textarea{min-height:72px;resize:vertical}
+label{display:block;font-size:12px;font-weight:900;color:#675d68;text-transform:uppercase;margin:8px 0 5px}.search{margin-bottom:10px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:12px;margin:10px 0;box-shadow:0 2px 8px rgba(0,0,0,.04)}.card.active{outline:3px solid rgba(23,63,66,.22)}.card h3{margin:0 0 6px}
+.badges{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}.badge{background:var(--soft);border:1px solid var(--line);border-radius:999px;padding:3px 8px;font-size:12px}
+.grid{display:grid;grid-template-columns:repeat(4,minmax(160px,1fr));gap:12px}.notice{background:#fbefd2;border:1px solid #dec99d;border-radius:12px;padding:12px;margin:10px 0}.notice.ok{background:#e9f7ef;border-color:#badfcc;color:#164b31}
+.section-title{display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px}.kpi{background:#e2dcd0;border:1px solid var(--line);border-radius:12px;padding:12px}.kpi .v{font-weight:900;font-size:22px}
+.modal-back{position:fixed;inset:0;background:rgba(0,0,0,.45);z-index:30;display:none;align-items:flex-start;justify-content:center;padding:30px 10px;overflow:auto}.modal{width:min(900px,96vw);background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:18px;box-shadow:0 15px 45px rgba(0,0,0,.28)}.modal-head{display:flex;justify-content:space-between;align-items:center;gap:10px}
+.table-wrap{overflow:auto;border:1px solid var(--line);border-radius:14px;background:#fffdf6}table{border-collapse:collapse;width:100%;min-width:760px}th,td{border-bottom:1px solid var(--line);border-right:1px solid var(--line);padding:8px}th{background:#d8d2c9;text-align:left}
+.qr-img{width:280px;height:280px;border:1px solid var(--line);border-radius:10px;background:white;padding:4px}.public-card{max-width:560px;margin:30px auto;background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:22px;box-shadow:0 4px 18px rgba(0,0,0,.08)}.public-card .value{font-size:20px;font-weight:900}
+@media(max-width:900px){.layout{grid-template-columns:1fr}.grid{grid-template-columns:1fr 1fr}aside{max-height:none}}@media(max-width:560px){.grid{grid-template-columns:1fr}}
+@media print{header,aside,.no-print,.actions,.section-title button,.modal-back{display:none!important}body{background:white}.layout{display:block}main{padding:0}.print-sheet{display:block!important}}
+.print-sheet{display:none}
+.sync-box{background:#fff;border:1px solid #c8e6c9;border-radius:14px;padding:10px 12px;margin:10px 18px;display:flex;gap:8px;align-items:center;justify-content:space-between;flex-wrap:wrap}.sync-dot{display:inline-block;width:10px;height:10px;border-radius:50%;background:#999;margin-right:6px}.sync-dot.ok{background:#2e7d32}.sync-dot.warn{background:#f57c00}.sync-dot.err{background:#c62828}.sync-text{font-size:15px;font-weight:800;color:#455a64}.sync-box.ok{background:#e8f5e9;border-color:#2e7d32}.sync-box.warn{background:#fff3cd;border-color:#e0b84d}.sync-box.err{background:#fdecea;border-color:#c62828}.guide-panel{display:grid;grid-template-columns:repeat(2,minmax(240px,1fr));gap:12px;margin:12px 0}.guide-card{border:2px solid var(--line);border-radius:16px;background:#fffdf6;padding:12px}.guide-card.iphone{border-color:#2e7d32}.guide-card.computer{border-color:#173f42}.guide-card h3{margin:0 0 8px}.big-btn{display:block;width:100%;font-size:17px;padding:14px 16px;border-radius:14px;margin:8px 0}.big-btn.iphone{background:#2e7d32;border-color:#2e7d32;color:#fff}.big-btn.computer{background:#173f42;border-color:#173f42;color:#fff}.big-btn.warn{background:#fff3cd;border-color:#e0b84d;color:#3d3320}.btn-desc{font-size:13px;font-weight:800;color:var(--muted);line-height:1.35}.save-panel{border:2px solid #2e7d32;border-radius:14px;background:#fffdf6;padding:10px;display:flex;gap:8px;flex-wrap:wrap;align-items:end}.save-panel button{flex:1;min-width:160px}.save-panel .hint{font-size:12px;font-weight:800;color:var(--muted);width:100%}@media(max-width:700px){.guide-panel{grid-template-columns:1fr}.big-btn{font-size:16px}}
+.mode-title{font-size:18px;font-weight:900;margin:0 0 6px}.phone-first{border:3px solid #2e7d32;background:#f3fff6}.computer-safe{border:2px dashed #173f42;background:#f7fbfb}.step-text{font-size:14px;font-weight:800;line-height:1.45;color:#455a64;margin:7px 0}.top-help{background:#fff7df;border:1px solid var(--line);border-radius:14px;padding:10px 12px;margin:10px 18px;font-size:14px;font-weight:900;color:#453c2e}.actions .pc-only-top{display:none}</style>
+</head>
+<body>
+<!-- ===== BLOCCO PASSWORD (solo gestione) — vedi PASSWORD qui sotto ===== -->
+<div id="cmLock" class="no-print" style="position:fixed;inset:0;z-index:99999;display:none;
+     background:#efe6d3;color:#3a2e25;font-family:system-ui,Arial,sans-serif;
+     align-items:center;justify-content:center;padding:20px;box-sizing:border-box">
+  <div style="background:#fff;border:1px solid #d8cbb0;border-radius:14px;max-width:340px;width:100%;
+       padding:26px 22px;text-align:center;box-shadow:0 10px 30px rgba(0,0,0,.12)">
+    <div style="font-size:34px;line-height:1;margin-bottom:8px">🍇</div>
+    <h2 style="margin:0 0 4px;font-size:19px;color:#6e2433">Schede QR Cisterne</h2>
+    <p style="margin:0 0 18px;font-size:13px;color:#7a6b58">Inserisci la password per continuare</p>
+    <input id="cmPwd" type="password" inputmode="text" autocomplete="off" placeholder="Password"
+       style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #c9b990;
+       border-radius:9px;text-align:center;margin-bottom:10px">
+    <div id="cmErr" style="color:#b33;font-size:13px;height:16px;margin-bottom:6px"></div>
+    <button id="cmBtn" type="button" style="width:100%;padding:12px;font-size:16px;font-weight:600;
+       color:#fff;background:#6e2433;border:0;border-radius:9px;cursor:pointer">Entra</button>
+    <label style="display:block;margin-top:12px;font-size:12px;color:#7a6b58">
+      <input id="cmRemember" type="checkbox" checked> Ricordami su questo dispositivo
+    </label>
+  </div>
+</div>
+<script>
+(function(){
+  var DEFAULT_PASSWORD = "cantina2025";   /* <<< password iniziale / di ripristino <<< */
+  window.CM_DEFAULT_PASSWORD = DEFAULT_PASSWORD;
+  function cmCurrentPw(){ return localStorage.getItem('cm_password_qr') || DEFAULT_PASSWORD; }
 
+  /* Vista pubblica QR (scansione ?n=, link salvato ?snap=, oppure ?id=): NIENTE password */
+  var p = new URLSearchParams(location.search);
+  if (p.has('n') || p.has('snap') || p.has('id')) return;
+
+  /* Già sbloccato su questo dispositivo/sessione */
+  if (localStorage.getItem('cm_unlocked_qr') === '1') return;
+  if (sessionStorage.getItem('cm_unlocked_qr') === '1') return;
+
+  var lock = document.getElementById('cmLock');
+  var pwd  = document.getElementById('cmPwd');
+  var err  = document.getElementById('cmErr');
+  var btn  = document.getElementById('cmBtn');
+  var rem  = document.getElementById('cmRemember');
+  lock.style.display = 'flex';
+  document.body.style.overflow = 'hidden';
+  setTimeout(function(){ pwd.focus(); }, 100);
+
+  function tryUnlock(){
+    if (pwd.value === cmCurrentPw()){
+      if (rem.checked) localStorage.setItem('cm_unlocked_qr','1');
+      else             sessionStorage.setItem('cm_unlocked_qr','1');
+      lock.style.display = 'none';
+      document.body.style.overflow = '';
+    } else {
+      err.textContent = 'Password errata';
+      pwd.value = '';
+      pwd.focus();
+    }
+  }
+  btn.addEventListener('click', tryUnlock);
+  pwd.addEventListener('keydown', function(e){ if(e.key === 'Enter') tryUnlock(); });
+})();
+</script>
+<!-- ===== FINE BLOCCO PASSWORD ===== -->
+<!-- ===== FINESTRA CAMBIA PASSWORD ===== -->
+<div id="cmChange" class="no-print" style="position:fixed;inset:0;z-index:99998;display:none;
+     background:rgba(0,0,0,.35);align-items:center;justify-content:center;padding:20px;
+     box-sizing:border-box;font-family:system-ui,Arial,sans-serif">
+  <div style="background:#fff;border:1px solid #d8cbb0;border-radius:14px;max-width:340px;width:100%;
+       padding:24px 22px;box-shadow:0 12px 32px rgba(0,0,0,.25)">
+    <h2 style="margin:0 0 6px;font-size:18px;color:#6e2433;text-align:center">Cambia password</h2>
+    <p style="margin:0 0 14px;font-size:13px;color:#7a6b58;text-align:center">Scrivi la nuova password e premi Salva.</p>
+    <input id="cmcNew" type="text" autocomplete="off" autocapitalize="off" spellcheck="false" placeholder="Nuova password"
+       style="width:100%;box-sizing:border-box;padding:12px;font-size:16px;border:1px solid #c9b990;border-radius:9px;text-align:center;margin-bottom:6px">
+    <div id="cmcMsg" style="font-size:13px;min-height:16px;margin-bottom:8px"></div>
+    <div style="display:flex;gap:8px">
+      <button type="button" onclick="closeChangePassword()" style="flex:1;padding:12px;font-size:15px;
+         color:#6e2433;background:#f0e8d6;border:1px solid #d8cbb0;border-radius:9px;cursor:pointer">Annulla</button>
+      <button type="button" onclick="saveNewPassword()" style="flex:1;padding:12px;font-size:15px;font-weight:600;
+         color:#fff;background:#6e2433;border:0;border-radius:9px;cursor:pointer">Salva</button>
+    </div>
+  </div>
+</div>
+<!-- ===== FINE FINESTRA CAMBIA PASSWORD ===== -->
+<header>
+  <div class="logo">QR</div>
+  <div><h1>Schede QR Cisterne</h1><div class="sub">v51 · scheda QR: aggiunti Categoria e Colore</div></div>
+  <div class="actions">
+    <button onclick="goHome()">Home</button>
+    <button class="primary" onclick="salvaOnline()">💾 Salva</button>
+    <button onclick="aggiornaDati()">🔄 Ricarica dati online</button>
+    <button onclick="openListsManager()">Liste vini</button><button onclick="showTotals()">Totali</button>
+    <button onclick="printQrLabels()">Stampa QR</button><button onclick="printTypographyQr()">File tipografia QR</button>
+    <button onclick="exportData()">📥 Backup dati</button>
+    <button onclick="document.getElementById('importFile').click()">📤 Ripristina backup</button>
+    <button onclick="changePassword()">🔑 Password</button>
+    <input id="importFile" type="file" accept="application/json,.json" style="display:none" onchange="importData(event)">
+  </div>
+</header>
+<div class="top-help no-print">Apri il programma: carica i dati da Google Sheets. Modifica i dati. Premi SALVA. Sull’altro dispositivo premi AGGIORNA DATI o riapri il programma.</div>
+<div class="sync-box">
+  <div class="sync-text"><span id="syncDot" class="sync-dot"></span><span id="syncStatus">Apertura: carico automaticamente i dati online...</span></div>
+  <button class="primary" onclick="aggiornaDati()">🔄 Ricarica dati online</button>
+</div>
+<div id="app" class="layout">
+  <aside>
+    <input id="search" class="search" placeholder="Cerca contenitore, vino, lotto..." oninput="renderList()">
+    <button class="primary" style="width:100%" onclick="newContainer()">+ Nuovo contenitore</button>
+    <div id="cards"></div>
+  </aside>
+  <main id="main"></main>
+</div>
+
+<div id="listModal" class="modal-back">
+  <div class="modal">
+    <div class="modal-head"><h2>Liste vini</h2><button onclick="closeListsManager()">Chiudi</button></div>
+    <div class="notice">Gestisci le voci dei menu a tendina. Le descrizioni e i nomi compaiono nelle schede contenitore.</div>
+    <div class="grid">
+      <div><h3>Denominazioni</h3><input id="newDen" placeholder="Nuova denominazione"><button class="primary" onclick="addListVal('denominations','newDen')">+ Inserisci</button><div id="denList"></div></div>
+      <div><h3>Nomi vino</h3><input id="newName" placeholder="Nuovo nome vino"><button class="primary" onclick="addListVal('wineNames','newName')">+ Inserisci</button><div id="nameList"></div></div>
+      <div><h3>Categorie</h3><input id="newCat" placeholder="Nuova categoria"><button class="primary" onclick="addListVal('categories','newCat')">+ Inserisci</button><div id="catList"></div></div><div><h3>Atto / DOP / IGP</h3><input id="newClass" placeholder="Nuova voce"><button class="primary" onclick="addListVal('classifications','newClass')">+ Inserisci</button><div id="classList"></div></div>
+      <div><h3>Colori</h3><input id="newColor" placeholder="Nuovo colore"><button class="primary" onclick="addListVal('colors','newColor')">+ Inserisci</button><div id="colorList"></div></div>
+      <div><h3>Gusti</h3><input id="newTaste" placeholder="Nuovo gusto"><button class="primary" onclick="addListVal('tastes','newTaste')">+ Inserisci</button><div id="tasteList"></div></div>
+    </div>
+  </div>
+</div>
+
+
+<div id="transferModal" class="modal-back">
+  <div class="modal">
+    <div class="modal-head"><h2>Trasferisci dati scheda</h2><button onclick="closeTransferModal()">Chiudi</button></div>
+    <div class="notice">Copia o sposta i dati vino da questo contenitore a un altro QR. Tipo, numero, matricola e capacità del contenitore destinazione restano invariati.</div>
+    <label>Destinazione</label><select id="transferDest"></select>
+    <label>Tipo trasferimento</label><select id="transferMode"><option value="copy">Copia dati</option><option value="move">Sposta dati e svuota origine</option></select>
+    <button class="primary" onclick="confirmTransferData()">Conferma trasferimento</button>
+  </div>
+</div>
+
+<script>
+const STORE='schede_qr_cisterne_v1';
+const CLOUD_URL='https://script.google.com/macros/s/AKfycbxfSK_P2B3C9GXMpx_TmwC1Bw3p9qGbPYCa6C-wf1u4IfpaC88xl19bbG1p0UoC0TBg/exec';
+let syncTimer=null;
+let state, selectedId=null;
+let editSnapshots={};
+function newId(){return 'c'+Date.now()+Math.random().toString(16).slice(2)}
+function today(){return new Date().toISOString().slice(0,10)}
+function esc(s){return String(s??'').replace(/[&<>"']/g,m=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]))}
+function fmt(n,d=2){return (Number(n)||0).toLocaleString('it-IT',{minimumFractionDigits:d,maximumFractionDigits:d})}
+function getRiempimento(c){
+  const hl=Number(c.hl)||0;
+  const capacity=Number(c.capacity)||0;
+  if(!hl || hl<=0 || c.empty) return 'Vuota';
+  if(!capacity || capacity<=0) return 'Piena';
+  const perc=Math.round((hl/capacity)*100);
+  return 'Piena '+perc+'%';
+}
+function getRiempimentoPerc(c){
+  const hl=Number(c.hl)||0;
+  const capacity=Number(c.capacity)||0;
+  if(!hl || hl<=0 || !capacity || capacity<=0) return 0;
+  return Math.round((hl/capacity)*100);
+}
+function dateIT(d){if(!d)return'';const p=String(d).split('-');return p.length===3?`${p[2]}/${p[1]}/${p[0]}`:String(d)}
+function opt(arr,val=''){return '<option value=""></option>'+arr.map(x=>`<option value="${esc(x)}" ${String(x)===String(val)?'selected':''}>${esc(x)}</option>`).join('')}
+function blankContainer(no=''){return {id:newId(),type:'Autoclave',number:String(no||''),serial:'',capacity:'',year:'',date:today(),annata:String(new Date().getFullYear()),liters:'',hl:'',denomination:'',classification:'',wineName:'',category:'',color:'Rosso',taste:'',lot:'',idoneitaNo:'',idoneitaDate:'',containsSulfites:true,productItaly:true,notes:'',empty:true,updatedAt:''}}
+function defaultState(){const containers=[];for(let i=1;i<=39;i++)containers.push(blankContainer(i));return {qrBaseUrl:'https://cantinamanzini-byte.github.io/schede-qr-cisterne/',lists:{denominations:['LAMBRUSCO GRASPAROSSA DI CASTELVETRO','BIANCO DI MODENA','LAMBRUSCO DI MODENA','VINO DA TAVOLA'],wineNames:['BOLLA ROSSA','L’ACINO','BOLLICINE','ACINO TAGLIO UNICO','ACINO TRATTATO'],categories:['MPF','Frizzante','Spumante','Vino','Vino frizzante','Vino in elaborazione'],classifications:['Atto a DOP','DOP','IGP','Vino da tavola','Altro'],colors:['Bianco','Rosato','Rosso'],tastes:['Dry','Secco','Amabile','Dolce','Brut','Extra Dry','Abboccato','Altro']},containers}}
+function fixSchedeFabbrica(){
+  // Pulizia una tantum: le schede rimaste di fabbrica avevano una data di nascita
+  // che le faceva sembrare "più recenti" di backup e dati online. Qui gliela tolgo.
+  if(localStorage.getItem('cm_fix_v50'))return;
+  (state.containers||[]).forEach(c=>{
+    const vals=[c.serial,c.capacity,c.year,c.liters,c.hl,c.denomination,c.classification,c.wineName,c.category,c.taste,c.lot,c.idoneitaNo,c.idoneitaDate,c.notes];
+    const senzaDati=vals.every(v=>String(v??'').trim()==='');
+    if(senzaDati && c.empty!==false) c.updatedAt='';
+  });
+  localStorage.setItem(STORE,JSON.stringify(state));
+  localStorage.setItem('cm_fix_v50','1');
+}
+function load(){state=JSON.parse(localStorage.getItem(STORE)||'null')||defaultState();state.lists=state.lists||defaultState().lists;if(!state.qrBaseUrl)state.qrBaseUrl='https://cantinamanzini-byte.github.io/schede-qr-cisterne/';state.containers=state.containers||[];selectedId=state.containers[0]?.id||null;fixSchedeFabbrica()}
+function save(){localStorage.setItem(STORE,JSON.stringify(state));scheduleCloudSync()}
+function refreshCurrentView(){renderList();renderMain();setSyncStatus('Vista aggiornata. Modifiche salvate su questo dispositivo.','ok')}
+function countUsefulContainers(st){return ((st&&st.containers)||[]).filter(hasUsefulContainerData).length}
+function isStateDangerouslyEmpty(st){return !st || !Array.isArray(st.containers) || st.containers.length<10 || countUsefulContainers(st)===0}
+function markLocalChange(){setSyncStatus('Modifica pronta. Quando hai finito premi “Salva”.','warn')}
+
+
+function ensureEditSnapshot(){
+  const c=getC();
+  if(c && !editSnapshots[c.id]) editSnapshots[c.id]=cloneData(c);
+}
+async function saveCurrentCardOnline(){
+  const c=getC();
+  if(!c)return;
+  c.updatedAt=new Date().toISOString();
+  c.empty=!hasUsefulContainerData(c);
+  localStorage.setItem(STORE,JSON.stringify(state));
+  setSyncStatus('Salvataggio: invio online solo questa vasca...', 'warn');
+  try{
+    const cloud=await loadFromCloud();
+    if(isStateDangerouslyEmpty(cloud)){
+      setSyncStatus('Salvataggio bloccato: archivio online vuoto. Prima salva archivio completo da computer.','err');
+      alert('Archivio online vuoto o incompleto. Prima fai il caricamento iniziale dal computer e premi “Salva”.');
+      return;
+    }
+    const current=cloneData(c);
+    const key=contKey(current);
+    const containers=(cloud.containers||[]).map(x=>contKey(x)===key?current:cloneData(x));
+    if(!containers.some(x=>contKey(x)===key))containers.push(current);
+    state={
+      qrBaseUrl: state.qrBaseUrl || cloud.qrBaseUrl || defaultState().qrBaseUrl,
+      lists: mergeLists(cloud.lists,state.lists),
+      containers: containers.sort((a,b)=>String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}))
+    };
+    localStorage.setItem(STORE,JSON.stringify(state));
+    await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
+    selectedId=(state.containers.find(x=>contKey(x)===key)||state.containers[0])?.id||null;
+    editSnapshots[selectedId]=cloneData(getC());
+    renderList();renderMain();
+    setSyncStatus('Salvato online.','ok');
+    alert('Salvato. Sul computer premi “Ricarica dati online” per vedere questa modifica.');
+  }catch(e){
+    setSyncStatus('Errore: non riesco a salvare questa vasca online.','err');
+    alert('Non riesco a collegarmi a Google Sheets. La modifica resta salvata solo su questo dispositivo.');
+  }
+}
+function cancelCurrentCardChanges(){
+  const c=getC();
+  if(!c)return;
+  const snap=editSnapshots[c.id];
+  if(!snap){
+    setSyncStatus('Nessuna modifica da annullare.','warn');
+    return;
+  }
+  const idx=state.containers.findIndex(x=>x.id===c.id);
+  if(idx>=0){
+    state.containers[idx]=cloneData(snap);
+    localStorage.setItem(STORE,JSON.stringify(state));
+    setSyncStatus('Modifiche annullate: scheda tornata all’ultimo salvataggio.','warn');
+    renderList();renderMain();
+  }
+}
+function saveButtonsHtml(){
+  return `<div class="save-panel"><button class="big-btn iphone" onclick="salvaOnline()">💾 Salva<br><span style="font-size:12px;font-weight:800">salva le modifiche online</span></button><button class="small" onclick="aggiornaDati()">🔄 Ricarica dati online</button><button class="danger" onclick="cancelCurrentCardChanges()">↩️ Annulla modifiche</button><div class="hint"><b>Logica semplice:</b> il programma carica da solo all’apertura. Compila la scheda, poi premi <b>Salva</b>. Usa <b>Ricarica dati online</b> solo se ritarda.</div></div>`;
+}
+function guidePanelHtml(){
+  return `<div class="guide-panel no-print">
+    <div class="guide-card iphone phone-first"><h3 class="mode-title">Uso semplice</h3>
+      <button class="big-btn iphone" onclick="salvaOnline()">💾 Salva</button>
+      <div class="btn-desc">Premi dopo aver inserito o modificato i dati. Le modifiche vanno su Google Sheets.</div>
+    </div>
+    <div class="guide-card computer computer-safe"><h3 class="mode-title">Solo se serve</h3>
+      <button class="big-btn computer" onclick="aggiornaDati()">🔄 Ricarica dati online</button>
+      <div class="btn-desc">Usa solo se il caricamento automatico ritarda o se vedi dati vecchi.</div>
+    </div>
+  </div><div class="notice"><b>Come il programma kWh:</b><br>Apri il programma: carica da solo gli ultimi dati online.<br>Modifichi da iPhone o da computer → premi <b>Salva</b>.<br><b>Ricarica dati online</b> serve solo se il caricamento ritarda.</div>`;
+}
+async function aggiornaDati(){
+  await ricaricaDaCloud('dispositivo');
+}
+async function aggiornaDispositivo(tipo){
+  await aggiornaDati();
+}
+async function salvaOnline(){
+  await saveToCloud(false);
+}
+async function salvaDaComputer(){
+  await salvaOnline();
+}
+async function salvaDaIphone(){
+  await salvaOnline();
+}
+
+function setSyncStatus(text,tipo=''){
+  const s=document.getElementById('syncStatus'), d=document.getElementById('syncDot');
+  if(s)s.textContent=text;
+  if(d)d.className='sync-dot'+(tipo?' '+tipo:'');
+  const box=document.querySelector('.sync-box');
+  if(box)box.className='sync-box'+(tipo?' '+tipo:'');
+}
+function normalizeCloudData(d){
+  const base=defaultState();
+  d=d||{};
+  d.lists=d.lists||base.lists;
+  d.containers=Array.isArray(d.containers)?d.containers:base.containers;
+  d.qrBaseUrl=d.qrBaseUrl||base.qrBaseUrl;
+  return d;
+}
+function cloneData(x){return JSON.parse(JSON.stringify(x||{}));}
+function contKey(c){
+  const n=String(c?.number||'').trim();
+  return n ? 'numero:'+n : 'id:'+(c?.id||newId());
+}
+function hasUsefulContainerData(c){
+  if(!c)return false;
+  // Il Colore NON conta: le schede di fabbrica nascono già con "Rosso" e sembravano piene.
+  const vals=[c.serial,c.capacity,c.year,c.liters,c.hl,c.denomination,c.classification,c.wineName,c.category,c.taste,c.lot,c.idoneitaNo,c.idoneitaDate,c.notes];
+  // Utile = ha dati veri, oppure è stata toccata da una persona (ha una data di modifica).
+  // Così anche uno svuotamento voluto conta e non viene annullato dai dati vecchi online.
+  return vals.some(v=>String(v??'').trim()!=='') || c.empty===false || String(c.updatedAt||'').trim()!=='';
+}
+function chooseNewestContainer(a,b){
+  if(!a)return cloneData(b);
+  if(!b)return cloneData(a);
+  const au=hasUsefulContainerData(a), bu=hasUsefulContainerData(b);
+  if(au && !bu)return cloneData(a);
+  if(bu && !au)return cloneData(b);
+  const ta=Date.parse(a.updatedAt||0)||0;
+  const tb=Date.parse(b.updatedAt||0)||0;
+  return cloneData(tb>=ta?b:a);
+}
+function cleanLists(lists){
+  const base=defaultState().lists;
+  const src=lists&&typeof lists==='object'?lists:{};
+  const out={};
+  Object.keys(base).forEach(k=>{
+    out[k]=[];
+    const arr=Array.isArray(src[k])?src[k]:base[k];
+    arr.forEach(v=>{
+      v=String(v??'').trim();
+      if(v && !out[k].includes(v))out[k].push(v);
+    });
+  });
+  Object.keys(src).forEach(k=>{
+    if(out[k])return;
+    out[k]=[];
+    (Array.isArray(src[k])?src[k]:[]).forEach(v=>{
+      v=String(v??'').trim();
+      if(v && !out[k].includes(v))out[k].push(v);
+    });
+  });
+  return out;
+}
+function mergeStates(localState,cloudState){
+  const base=defaultState();
+  const local=normalizeCloudData(localState||{});
+  const cloud=normalizeCloudData(cloudState||{});
+  const map={};
+  [...(cloud.containers||[]),...(local.containers||[])].forEach(c=>{
+    const k=contKey(c);
+    map[k]=chooseNewestContainer(map[k],c);
+  });
+  const containers=Object.values(map).sort((a,b)=>String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return {
+    qrBaseUrl: local.qrBaseUrl || cloud.qrBaseUrl || base.qrBaseUrl,
+    // In ricarica dati, le liste online sono la versione ufficiale.
+    // Non unisco più con le vecchie voci locali, così modifiche/eliminazioni restano valide.
+    lists: cleanLists(cloud.lists || local.lists || base.lists),
+    containers
+  };
+}
+
+function chooseLocalProtected(localC, cloudC){
+  // Protezione Stefano: non cancellare mai dati buoni con una copia vuota.
+  // Se entrambi hanno dati, tiene la scheda aggiornata più di recente.
+  const lu=hasUsefulContainerData(localC), cu=hasUsefulContainerData(cloudC);
+  if(lu && !cu) return cloneData(localC);
+  if(cu && !lu) return cloneData(cloudC);
+  if(lu && cu) return chooseNewestContainer(localC, cloudC);
+  return chooseNewestContainer(localC, cloudC);
+}
+function mergeStatesKeepLocal(localState,cloudState){
+  const base=defaultState();
+  const local=normalizeCloudData(localState||{});
+  const cloud=normalizeCloudData(cloudState||{});
+  const keys=[];
+  const lm={}, cm={};
+  (local.containers||[]).forEach(c=>{const k=contKey(c); lm[k]=c; if(!keys.includes(k))keys.push(k);});
+  (cloud.containers||[]).forEach(c=>{const k=contKey(c); cm[k]=c; if(!keys.includes(k))keys.push(k);});
+  const containers=keys.map(k=>chooseLocalProtected(lm[k],cm[k]))
+    .filter(Boolean)
+    .sort((a,b)=>String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return {
+    qrBaseUrl: local.qrBaseUrl || cloud.qrBaseUrl || base.qrBaseUrl,
+    // In salvataggio, le liste locali sono la versione ufficiale.
+    // Così se modifichi una voce, la vecchia non ritorna dopo il salvataggio.
+    lists: cleanLists(local.lists || cloud.lists || base.lists),
+    containers
+  };
+}
+function nextContainerNumber(){
+  const nums=(state.containers||[]).map(c=>Number(c.number)).filter(n=>Number.isFinite(n));
+  let n=1;
+  while(nums.includes(n))n++;
+  return n;
+}
+function loadFromCloud(){
+  return new Promise((resolve,reject)=>{
+    const cb='qrCisterneCallback_'+Date.now();
+    const script=document.createElement('script');
+    const timeout=setTimeout(()=>{cleanup();reject(new Error('Tempo scaduto'));},15000);
+    function cleanup(){
+      clearTimeout(timeout);
+      try{delete window[cb];}catch(e){window[cb]=undefined;}
+      if(script.parentNode)script.parentNode.removeChild(script);
+    }
+    window[cb]=(res)=>{
+      cleanup();
+      if(res&&res.ok)resolve(normalizeCloudData(res.data));
+      else reject(new Error('Risposta cloud non valida'));
+    };
+    script.onerror=()=>{cleanup();reject(new Error('Errore collegamento cloud'));};
+    script.src=CLOUD_URL+'?callback='+encodeURIComponent(cb)+'&t='+Date.now();
+    document.body.appendChild(script);
+  });
+}
+async function saveToCloud(silent=true){
+  try{
+    // Protezione principale: non salvare mai una lista locale vuota o incompleta sopra Google Sheets.
+    if(isStateDangerouslyEmpty(state)){
+      setSyncStatus('Salvataggio bloccato: dati locali vuoti o incompleti. Ricarica dati online.','err');
+      if(!silent)alert('Salvataggio bloccato: su questo dispositivo i dati sembrano vuoti o incompleti. Prima attendi il caricamento automatico oppure usa “Ricarica dati online”.');
+      return;
+    }
+    setSyncStatus('Controllo dati online prima del salvataggio...', 'warn');
+    let cloud=null;
+    try{ cloud=await loadFromCloud(); }catch(e){ cloud=null; }
+    if(cloud){
+      const localCount=countUsefulContainers(state);
+      const cloudCount=countUsefulContainers(cloud);
+      if(cloudCount>0 && localCount===0){
+        setSyncStatus('Salvataggio bloccato: il telefono/PC ha dati vuoti, online ci sono dati.','err');
+        if(!silent)alert('Salvataggio bloccato: online ci sono dati, ma su questo dispositivo sembrano vuoti. Ricarica dati online.');
+        return;
+      }
+      if(!silent && cloudCount>localCount+3){
+        const ok=prompt('ATTENZIONE: online risultano più schede compilate di quelle presenti qui. Per salvare comunque scrivi SALVA:');
+        if((ok||'').trim().toUpperCase()!=='SALVA'){
+          setSyncStatus('Salvataggio annullato per sicurezza.','warn');
+          return;
+        }
+      }
+      state=mergeStatesKeepLocal(state,cloud);
+    }
+    if(isStateDangerouslyEmpty(state)){
+      setSyncStatus('Salvataggio bloccato: dopo il controllo i dati risultano ancora vuoti.','err');
+      if(!silent)alert('Salvataggio bloccato: i dati risultano ancora vuoti o incompleti.');
+      return;
+    }
+    localStorage.setItem(STORE,JSON.stringify(state));
+    setSyncStatus('Salvataggio su Google Sheets...', 'warn');
+    await fetch(CLOUD_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'text/plain;charset=utf-8'},body:JSON.stringify({data:state})});
+    setSyncStatus('Salvato su Google Sheets','ok');
+    if(document.activeElement && ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName)){
+      // Non ridisegno mentre stai scrivendo o scegliendo da una tendina.
+    }else{
+      renderList();
+    }
+    if(!silent)alert('Dati salvati su Google Sheets.');
+  }catch(e){
+    setSyncStatus('Errore cloud: dati salvati solo su questo dispositivo','err');
+    if(!silent)alert('Non sono riuscito a salvare su Google Sheets. Dati salvati solo sul dispositivo.');
+  }
+}
+function scheduleCloudSync(){
+  if(syncTimer)clearTimeout(syncTimer);
+  syncTimer=setTimeout(()=>{markLocalChange();},500);
+}
+async function startCloud(){
+  setSyncStatus('Caricamento da Google Sheets...','warn');
+  const localState=state;
+  try{
+    const cloud=await loadFromCloud();
+    state=mergeStatesKeepLocal(localState,cloud);
+    localStorage.setItem(STORE,JSON.stringify(state));
+    selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
+    setSyncStatus('Dati caricati da Google Sheets','ok');
+    renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();
+  }catch(e){
+    state=localState;
+    setSyncStatus('Cloud non raggiungibile: uso dati dispositivo','err');
+    renderList();renderMain();
+  }
+}
+async function ricaricaDaCloud(tipo='dispositivo'){
+  const nome='dati';
+  setSyncStatus('Ricarico dati online da Google Sheets...', 'warn');
+  try{
+    const cloud=await loadFromCloud();
+    const prima=countUsefulContainers(state);
+    const online=countUsefulContainers(cloud);
+    if(online===0){
+      setSyncStatus('Unione bloccata: Google Sheets sembra vuoto.','err');
+      alert('Google Sheets sembra vuoto. Non cancello i dati presenti su questo dispositivo.');
+      return;
+    }
+    state=mergeStatesKeepLocal(state,cloud);
+    editSnapshots={};
+    localStorage.setItem(STORE,JSON.stringify(state));
+    selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
+    setSyncStatus('Dati ricaricati online','ok');
+    renderList();renderMain();
+    alert('Dati ricaricati. Prima: '+prima+' schede compilate qui, online: '+online+'.');
+  }catch(e){
+    setSyncStatus('Non riesco a ricaricare i dati online','err');
+    alert('Non riesco a collegarmi a Google Sheets. Controlla la connessione e riprova.');
+  }
+}
+
+async function forzaSyncCloud(){
+  await saveToCloud(false);
+}
+
+function getC(){return state.containers.find(c=>c.id===selectedId)||state.containers[0]}
+function titleC(c){return `${c.type||'Contenitore'} ${c.number||''}`.trim()}
+function publicData(c){
+  return {type:c.type,number:c.number,serial:c.serial,capacity:c.capacity,year:c.year,date:c.date,annata:c.annata,liters:c.liters,hl:c.hl,denomination:c.denomination,classification:c.classification,wineName:c.wineName,category:c.category,color:c.color,taste:c.taste,lot:c.lot,idoneitaNo:c.idoneitaNo,idoneitaDate:c.idoneitaDate,containsSulfites:c.containsSulfites,productItaly:c.productItaly,notes:c.notes};
+}
+function encodePublicData(c){
+  return btoa(unescape(encodeURIComponent(JSON.stringify(publicData(c))))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+}
+function decodePublicData(s){
+  try{
+    s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length%4)s+='=';
+    return JSON.parse(decodeURIComponent(escape(atob(s))));
+  }catch(e){return null;}
+}
+
+function snapshotData(c){
+  return {
+    type:c.type, number:c.number, serial:c.serial, capacity:c.capacity, year:c.year,
+    date:c.date, annata:c.annata, liters:c.liters, hl:c.hl,
+    denomination:c.denomination, classification:c.classification, wineName:c.wineName,
+    category:c.category, color:c.color, taste:c.taste, lot:c.lot,
+    idoneitaNo:c.idoneitaNo, idoneitaDate:c.idoneitaDate,
+    containsSulfites:c.containsSulfites, productItaly:c.productItaly,
+    notes:c.notes, empty:c.empty, updatedAt:c.updatedAt,
+    snapshotCreatedAt:new Date().toISOString()
+  };
+}
+function encodeSnapshot(c){
+  try{
+    return btoa(unescape(encodeURIComponent(JSON.stringify(snapshotData(c))))).replace(/\+/g,'-').replace(/\//g,'_').replace(/=+$/,'');
+  }catch(e){return '';}
+}
+function decodeSnapshot(s){
+  try{
+    s=String(s||'').replace(/-/g,'+').replace(/_/g,'/');
+    while(s.length%4)s+='=';
+    return JSON.parse(decodeURIComponent(escape(atob(s))));
+  }catch(e){return null;}
+}
+function replaceUrlWithSnapshot(c){
+  try{
+    const snap=encodeSnapshot(c);
+    if(snap && history && history.replaceState){
+      history.replaceState(null,'',location.pathname+'?snap='+encodeURIComponent(snap));
+    }
+  }catch(e){}
+}
+function qrPayload(c){
+  const base=(state.qrBaseUrl||'').trim();
+  if(base){
+    const sep=base.includes('?')?'&':'?';
+    return base+sep+'n='+encodeURIComponent(c.number||'');
+  }
+  return `Scheda contenitore\n${c.type} ${c.number}\nMatricola: ${c.serial||''}`;
+}
+function qrUrl(c,size=180){return 'https://api.qrserver.com/v1/create-qr-code/?size='+size+'x'+size+'&data='+encodeURIComponent(qrPayload(c))}
+function filtered(){const q=(document.getElementById('search')?.value||'').toLowerCase();return state.containers.filter(c=>[c.type,c.number,c.serial,c.wineName,c.denomination,c.classification,c.lot,c.idoneitaNo].join(' ').toLowerCase().includes(q)).sort((a,b)=>(Date.parse(b.updatedAt||0)||0)-(Date.parse(a.updatedAt||0)||0)||String(a.number).localeCompare(String(b.number),'it',{numeric:true}))}
+
+function goHome(){
+  if(location.search){ location.href=location.pathname; return; }
+  renderList();
+  if(typeof renderHomeScreen==='function') renderHomeScreen();
+  else renderMain();
+}
+function printBarHtml(){
+  return `<style>
+    .cm-printbar{position:fixed;top:0;left:0;right:0;background:#5b1f2b;display:flex;gap:12px;justify-content:center;align-items:center;padding:10px;font-family:Arial,sans-serif;z-index:9999;box-shadow:0 2px 8px rgba(0,0,0,.35)}
+    .cm-printbar button{font-size:18px;font-weight:800;padding:12px 20px;border:0;border-radius:10px;cursor:pointer}
+    .cm-printbar .cm-print{background:#2d8a4e;color:#fff}
+    .cm-printbar .cm-close{background:#fff;color:#5b1f2b}
+    body{margin-top:70px!important}
+    @media print{.cm-printbar{display:none!important}body{margin-top:0!important}}
+  </style><div class="cm-printbar"><button class="cm-print" onclick="print()">🖨️ Stampa</button><button class="cm-close" onclick="window.close();setTimeout(function(){history.back()},400)">✕ Chiudi</button></div>`;
+}
+function printTypographyQr(){
+  const arr=state.containers.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number),'it',{numeric:true}));
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>File tipografia QR</title><style>
+    @page{size:A4;margin:10mm}
+    body{font-family:Arial;margin:0;color:#111}
+    .labels{display:grid;grid-template-columns:repeat(2,1fr);gap:8mm}
+    .label{border:1px solid #333;text-align:center;padding:5mm;page-break-inside:avoid;min-height:82mm}
+    img{width:60mm;height:60mm}
+    b{font-size:17pt;display:block;margin-top:2mm}
+    small{font-size:9pt;color:#444}
+  </style></head><body>${printBarHtml()}<div class="labels">${arr.map(c=>`<div class="label"><img src="${qrUrl(c,600)}"><b>${esc(titleC(c))}</b><small>${esc(c.serial||'')}</small></div>`).join('')}</div><script>setTimeout(()=>print(),800)<\/script></body></html>`);
+  w.document.close();
+}
+
+
+function renderHomeScreen(){
+  const rows=(state.containers||[]).filter(c=>!c.empty).sort((a,b)=>(Date.parse(b.updatedAt||0)||0)-(Date.parse(a.updatedAt||0)||0));
+  const totalHl=rows.reduce((s,c)=>s+(Number(c.hl)||0),0);
+  const totalLiters=rows.reduce((s,c)=>s+(Number(c.liters)||0),0);
+  const latest=rows.slice(0,12);
+  document.getElementById('main').innerHTML=`<div class="section-title"><h2>Home Schede QR</h2><div><button onclick="showTotals()">Totali</button><button onclick="printTipografiaQr()">File tipografia QR</button></div></div>
+  ${guidePanelHtml()}
+  <div class="grid"><div class="kpi"><label>Contenitori compilati</label><div class="v">${rows.length}</div></div><div class="kpi"><label>Totale HL</label><div class="v">${fmt(totalHl)}</div></div><div class="kpi"><label>Totale litri</label><div class="v">${fmt(totalLiters,0)}</div></div></div>
+  <div class="notice"><b>Ultime schede compilate/modificate</b> - le piu recenti compaiono prima.</div>
+  <div class="table-wrap"><table><thead><tr><th>Apri</th><th>Contenitore</th><th>Vino</th><th>Denominazione</th><th>Gusto</th><th>Lotto</th><th>HL</th><th>Aggiornato</th></tr></thead><tbody>${latest.map(c=>`<tr><td><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></td><td><b>${esc(titleC(c))}</b></td><td>${esc(c.wineName||'—')}</td><td>${esc(c.denomination||'—')}</td><td>${esc(c.taste||'—')}</td><td>${esc(c.lot||'—')}</td><td class="right"><b>${fmt(c.hl)}</b></td><td>${esc(dateIT((c.updatedAt||'').slice(0,10))||'—')}</td></tr>`).join('')||'<tr><td colspan="9">Nessuna scheda compilata.</td></tr>'}</tbody></table></div>`;
+}
+
+function renderList(){const arr=filtered();document.getElementById('cards').innerHTML=arr.map(c=>`<div class="card ${c.id===selectedId?'active':''}"><h3>${esc(titleC(c))}</h3><div class="sub">Matricola: <b>${esc(c.serial||'—')}</b></div><div class="badges"><span class="badge">${esc(getRiempimento(c))}</span><span class="badge">${esc(c.hl||'—')} hl</span></div><div class="sub">${esc(c.wineName||'—')}</div><button class="small primary" onclick="openContainer('${c.id}')">Apri</button></div>`).join('')||'<div class="notice">Nessun contenitore.</div>'}
+function openContainer(id){selectedId=id;ensureEditSnapshot();renderList();renderMain()}
+function showHome(){renderList();renderHomeScreen()}
+function renderMain(){const c=getC(); if(!c){document.getElementById('main').innerHTML='<div class="notice">Nessun contenitore.</div>';return}
+ensureEditSnapshot();
+document.getElementById('main').innerHTML=`<div class="section-title"><h2>${esc(titleC(c))}</h2><div class="no-print"><button onclick="printSheet()">Stampa scheda</button><button onclick="printSingleQr()">Stampa QR</button><button onclick="printReadableLabel()">Stampa etichetta leggibile</button><button onclick="openTransferModal()">Trasferisci dati</button><button class="danger" onclick="emptyContainer()">Svuota dati vino</button></div></div>
+<div class="notice ${c.empty?'':'ok'}">${c.empty?'Scheda vuota: compila i dati vino quando la cisterna viene caricata.':'Scheda compilata: il QR rimanda a questo contenitore.'}</div>
+${guidePanelHtml()}
+<div class="grid"><div class="kpi"><label>Contenitore</label><div class="v">${esc(titleC(c))}</div></div><div class="kpi"><label>HL</label><div class="v">${esc(c.hl||'—')}</div></div><div class="kpi"><label>Vino</label><div class="v">${esc(c.wineName||'—')}</div></div><div class="kpi"><label>Riempimento</label><div class="v">${esc(getRiempimento(c))}</div></div></div>
+<div class="card"><h3>Dati contenitore</h3><div class="grid">${field('Tipo contenitore','type',c.type)}${field('Numero','number',c.number)}${field('Matricola','serial',c.serial)}${field('Capacità HL','capacity',c.capacity,'number')}${field('Anno','year',c.year)}</div></div>
+<div class="card"><h3>Dati vino</h3><div class="grid">${field('Data','date',c.date,'date')}${field('Annata','annata',c.annata)}${field('Litri','liters',c.liters,'number')}${field('HL','hl',c.hl,'number')}<div><label>Denominazione</label><select onchange="upd('denomination',this.value)">${opt(state.lists.denominations,c.denomination)}</select></div><div><label>Atto/DOP/IGP</label><select onchange="upd('classification',this.value)">${opt(state.lists.classifications||[],c.classification)}</select></div><div><label>Nome vino</label><select onchange="upd('wineName',this.value)">${opt(state.lists.wineNames,c.wineName)}</select></div><div><label>Gusto</label><select onchange="upd('taste',this.value)">${opt(state.lists.tastes||[],c.taste)}</select></div><div><label>Categoria</label><select onchange="upd('category',this.value)">${opt(state.lists.categories,c.category)}</select></div><div><label>Colore</label><select onchange="upd('color',this.value)">${opt(state.lists.colors,c.color)}</select></div>${field('Lotto / Partita','lot',c.lot)}${field('Idoneità n°','idoneitaNo',c.idoneitaNo)}${field('Data idoneità','idoneitaDate',c.idoneitaDate,'date')}<div><label>Contiene solfiti</label><select onchange="upd('containsSulfites',this.value==='true')"><option value="true" ${c.containsSulfites?'selected':''}>Sì</option><option value="false" ${!c.containsSulfites?'selected':''}>No</option></select></div><div><label>Prodotto in Italia</label><select onchange="upd('productItaly',this.value==='true')"><option value="true" ${c.productItaly?'selected':''}>Sì</option><option value="false" ${!c.productItaly?'selected':''}>No</option></select></div><div>${saveButtonsHtml()}</div><div style="grid-column:1/-1"><label>Note</label><textarea oninput="upd('notes',this.value)" onchange="upd('notes',this.value)">${esc(c.notes||'')}</textarea></div></div></div>
+<div class="card no-print"><h3>QR</h3><div style="display:flex;gap:14px;align-items:center;flex-wrap:wrap"><img class="qr-img" src="${qrUrl(c,360)}" alt="QR"><div><div class="sub">Contenuto QR: QR fisso per contenitore. Con URL base apre la scheda del numero indicato; senza URL base è solo testo.</div><code>${esc(qrPayload(c))}</code><label>URL base QR</label><input value="${esc(state.qrBaseUrl||'')}" onchange="state.qrBaseUrl=this.value;save();" placeholder="https://cantinamanzini-byte.github.io/schede-qr-cisterne/"><button class="small" style="margin-top:6px" onclick="state.qrBaseUrl=location.href.split('?')[0];save();renderMain()">Usa URL corrente</button></div></div></div><div class="print-sheet" id="printSheet">${sheetHtml(c)}</div>`}
+function field(label,key,val,type='text'){return `<div><label>${label}</label><input data-key="${esc(key)}" type="${type}" value="${esc(val??'')}" oninput="upd('${key}',this.value)" onchange="upd('${key}',this.value)"></div>`}
+function parseNumIT(v){
+  let s=String(v??'').trim().replace(/[^\d.,-]/g,'');
+  if(s==='') return 0;
+  const neg=s.indexOf('-')===0; s=s.replace(/-/g,'');
+  const commas=(s.match(/,/g)||[]).length;
+  const dots=(s.match(/\./g)||[]).length;
+  if(commas && dots){
+    // entrambi presenti: l'ultimo separatore è quello decimale
+    if(s.lastIndexOf(',')>s.lastIndexOf('.')) s=s.replace(/\./g,'').replace(',','.');
+    else s=s.replace(/,/g,'');
+  } else if(commas){
+    if(commas>1) s=s.replace(/,/g,'');                 // 1,234,567 = migliaia
+    else { const a=s.split(',')[1]||''; s=(a.length===3)?s.replace(',',''):s.replace(',','.'); }
+  } else if(dots){
+    if(dots>1) s=s.replace(/\./g,'');                  // 1.234.567 = migliaia
+    else { const a=s.split('.')[1]||''; if(a.length===3) s=s.replace('.',''); } // 34.500 = migliaia; 34.5 = decimale
+  }
+  const n=Number(s);
+  return Number.isFinite(n)?(neg?-n:n):0;
+}
+function setInputValue(key,val){
+  document.querySelectorAll(`[data-key="${key}"]`).forEach(el=>{
+    if(document.activeElement!==el) el.value=val??'';
+  });
+}
+function upd(k,v){
+  const c=getC();if(!c)return;
+  c[k]=v;
+  if(k==='liters'){
+    if(String(v??'').trim()==='') c.hl='';
+    else c.hl=(parseNumIT(v)/100).toFixed(2);
+    setInputValue('hl',c.hl);
+  }
+  if(k==='hl'){
+    if(String(v??'').trim()==='') c.liters='';
+    else c.liters=String(Math.round(parseNumIT(v)*100));
+    setInputValue('liters',c.liters);
+  }
+  c.empty=false;c.updatedAt=new Date().toISOString();save();
+}
+function newContainer(){const c=blankContainer(nextContainerNumber());state.containers.push(c);selectedId=c.id;save();renderList();renderMain()}
+
+function openTransferModal(){
+  const c=getC();
+  const sel=document.getElementById('transferDest');
+  sel.innerHTML=(state.containers||[]).filter(x=>x.id!==c.id).sort((a,b)=>String(a.number).localeCompare(String(b.number),'it',{numeric:true})).map(x=>`<option value="${esc(x.id)}">${esc(titleC(x))} - ${esc(x.serial||'')}</option>`).join('');
+  document.getElementById('transferModal').style.display='flex';
+}
+function closeTransferModal(){document.getElementById('transferModal').style.display='none'}
+function wineDataFields(){return ['date','annata','liters','hl','denomination','classification','wineName','category','color','taste','lot','idoneitaNo','idoneitaDate','containsSulfites','productItaly','notes','empty'];}
+function clearWineData(c){Object.assign(c,{date:today(),annata:'',liters:'',hl:'',denomination:'',classification:'',wineName:'',category:'',color:'',taste:'',lot:'',idoneitaNo:'',idoneitaDate:'',containsSulfites:true,productItaly:true,notes:'',empty:true,updatedAt:new Date().toISOString()});}
+function confirmTransferData(){
+  const src=getC(); const dest=state.containers.find(x=>x.id===document.getElementById('transferDest').value);
+  if(!src||!dest)return;
+  if(!confirm('Trasferire i dati da '+titleC(src)+' a '+titleC(dest)+'?'))return;
+  wineDataFields().forEach(k=>dest[k]=JSON.parse(JSON.stringify(src[k])));
+  dest.empty=false;dest.updatedAt=new Date().toISOString();
+  if(document.getElementById('transferMode').value==='move')clearWineData(src);
+  selectedId=dest.id;save();closeTransferModal();renderList();renderMain();setSyncStatus('Trasferimento pronto. Premi “Salva” per inviarlo online.','warn');
+}
+
+function emptyContainer(){const c=getC();const ok=prompt('Svuotare i dati vino di '+titleC(c)+'? Restano tipo, numero, matricola e capacità. Scrivi SVUOTA per confermare:');if((ok||'').trim().toUpperCase()!=='SVUOTA')return;clearWineData(c);save();renderList();renderMain();setSyncStatus('Svuotamento pronto. Premi “Salva” per inviarlo online.','warn')}
+function sheetHtml(c){
+  return `<div class="sheet-wrap" style="font-family:'Times New Roman',serif;color:#111;width:190mm;margin:0 auto">    <div style="border:1.6px solid #222;padding:9mm 10mm;background:#fff">      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10mm;font-size:15pt;margin-bottom:8mm">        <div><b>DATA</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:42mm">${esc(dateIT(c.date)||'')}</span></div>        <div><b>ANNATA</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:34mm">${esc(c.annata||'')}</span></div>      </div>      <div style="display:grid;grid-template-columns:1.25fr .65fr .7fr;gap:8mm;font-size:15pt;margin-bottom:8mm">        <div><b>AUTOCLAVE/CISTERNA</b></div>        <div><b>N°</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:18mm">${esc(c.number||'')}</span></div>        <div><b>LT</b> <span style="border-bottom:1px dotted #333;display:inline-block;min-width:28mm">${esc(c.liters||'')}</span></div>      </div>      <div style="font-size:16pt;margin:0 0 2mm"><b>DENOMINAZIONE:</b></div>      <div style="font-size:18pt;line-height:1.22;text-transform:uppercase;margin-bottom:7mm">        <div>${esc(c.denomination||'')}</div>        <div>${esc(c.category||'')}</div>        <div>${esc(c.classification||'')}</div>        <div>${esc(c.color||'')}</div>        <div>${esc(c.taste||'')}</div>        <div>${c.productItaly?'PRODOTTO IN ITALIA':''}</div>        <div>${c.containsSulfites?'CONTIENE SOLFITI':''}</div>      </div>      <div style="font-size:15pt;margin-bottom:6mm">        <b>NOME</b>        <span style="border-bottom:1px dotted #333;display:inline-block;min-width:118mm;margin-left:8mm;text-transform:uppercase">${esc(c.wineName||'')}</span>      </div>      <div style="font-size:14pt;display:grid;grid-template-columns:1fr 1fr;gap:10mm;margin-bottom:4mm">        <div><b>LOTTO / PARTITA N.</b><br><span style="border-bottom:1px dotted #333;display:inline-block;min-width:72mm">${esc(c.lot||'')}</span></div>        <div><b>IDONEITÀ N.</b><br><span style="border-bottom:1px dotted #333;display:inline-block;min-width:72mm">${esc(c.idoneitaNo||'')}</span></div>      </div>      <div style="font-size:14pt;margin-bottom:7mm">        <b>DATA IDONEITÀ</b>        <span style="border-bottom:1px dotted #333;display:inline-block;min-width:42mm;margin-left:8mm">${esc(dateIT(c.idoneitaDate)||'')}</span>      </div>      <div style="border-top:1.6px solid #222;padding-top:5mm;margin-top:2mm">        <div style="font-family:Arial,sans-serif;font-size:14pt;font-weight:700;margin:0 0 4mm">DATI AUTOCLAVE / CISTERNA</div>        <table style="border-collapse:collapse;width:100%;font-family:Arial,sans-serif;font-size:11pt">          <tr><th style="border:1px solid #333;padding:5px;text-align:left">Tipo</th><td style="border:1px solid #333;padding:5px">${esc(c.type||'')}</td><th style="border:1px solid #333;padding:5px;text-align:left">Numero</th><td style="border:1px solid #333;padding:5px">${esc(c.number||'')}</td></tr>          <tr><th style="border:1px solid #333;padding:5px;text-align:left">Matricola</th><td style="border:1px solid #333;padding:5px">${esc(c.serial||'')}</td><th style="border:1px solid #333;padding:5px;text-align:left">Capacità</th><td style="border:1px solid #333;padding:5px">${esc(c.capacity||'')} HL</td></tr>          <tr><th style="border:1px solid #333;padding:5px;text-align:left">Riempimento</th><td style="border:1px solid #333;padding:5px">${esc(getRiempimento(c))}</td><th style="border:1px solid #333;padding:5px;text-align:left">% riempimento</th><td style="border:1px solid #333;padding:5px">${getRiempimentoPerc(c)||'—'}${getRiempimentoPerc(c)?'%':''}</td></tr>          <tr><th style="border:1px solid #333;padding:5px;text-align:left">Anno</th><td style="border:1px solid #333;padding:5px">${esc(c.year||'')}</td><th style="border:1px solid #333;padding:5px;text-align:left">Aggiornato</th><td style="border:1px solid #333;padding:5px">${esc(dateIT((c.updatedAt||'').slice(0,10))||'')}</td></tr>        </table>      </div>      <div style="margin-top:6mm;font-family:Arial,sans-serif;font-size:11pt"><b>Note:</b> ${esc(c.notes||'')}</div>    </div>  </div>`;
+}
+function printSheet(){
+  const c=getC();
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Scheda ${esc(titleC(c))}</title><style>
+    @page{size:A4 portrait;margin:10mm}
+    html,body{margin:0;padding:0;background:#fff;font-family:'Times New Roman',serif}
+    body{display:flex;justify-content:center;align-items:flex-start}
+    .sheet-wrap{width:190mm;margin:0 auto}
+    *{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+  </style></head><body>${printBarHtml()}${sheetHtml(c)}<script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+
+function readableLabelHtml(c, qrSize=210){
+  return `<div class="box">
+    <img src="${qrUrl(c,420)}" style="width:${qrSize}px;height:${qrSize}px"><br>
+    <b>${esc(titleC(c))}</b><br>
+    <div style="font-size:13px;margin-top:3px">Matricola: ${esc(c.serial||'—')}</div>
+    <hr>
+    <div style="font-size:14px;text-align:left;line-height:1.35">
+      <b>Vino:</b> ${esc(c.wineName||'—')}<br>
+      <b>Denominazione:</b> ${esc(c.denomination||'—')}<br><b>Atto/DOP/IGP:</b> ${esc(c.classification||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br>
+      <b>Lotto:</b> ${esc(c.lot||'—')}<br>
+      <b>HL:</b> ${esc(c.hl||'—')} · <b>Litri:</b> ${esc(c.liters||'—')}<br>
+      <b>Riempimento:</b> ${esc(getRiempimento(c))}<br>
+      <b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}<br>
+      ${c.containsSulfites?'<b>CONTIENE SOLFITI</b><br>':''}
+      ${c.productItaly?'<b>PRODOTTO IN ITALIA</b>':''}
+    </div>
+  </div>`;
+}
+function printReadableLabel(){
+  const c=getC();
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>Etichetta ${esc(titleC(c))}</title><style>
+    body{font-family:Arial;text-align:center;margin:14px}
+    .box{border:1px solid #333;display:inline-block;padding:12px;width:8.5cm;min-height:12cm;text-align:center}
+    b{font-size:18px}
+    hr{border:0;border-top:1px solid #333;margin:8px 0}
+    @media print{body{margin:0}.box{page-break-inside:avoid}}
+  </style></head><body>${printBarHtml()}${readableLabelHtml(c,230)}<script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+
+function printSingleQr(){
+  const c=getC();
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>QR ${esc(titleC(c))}</title><style>body{font-family:Arial;text-align:center;margin:20px}.box{border:1px solid #333;display:inline-block;padding:10px;width:7.5cm}img{width:220px;height:220px}b{font-size:20px}.txt{font-size:13px;text-align:left;margin-top:8px;line-height:1.35}</style></head><body>${printBarHtml()}<div class="box"><img src="${qrUrl(c,420)}"><br><b>${esc(titleC(c))}</b><br>Matricola: ${esc(c.serial||'')}<div class="txt"><b>Vino:</b> ${esc(c.wineName||'—')}<br><b>Gusto:</b> ${esc(c.taste||'—')}<br><b>Lotto:</b> ${esc(c.lot||'—')}<br><b>HL:</b> ${esc(c.hl||'—')} · <b>Riempimento:</b> ${esc(getRiempimento(c))}<br><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')}</div></div><script>setTimeout(()=>print(),500)<\/script></body></html>`);
+  w.document.close();
+}
+function printQrLabels(){printTipografiaQr()}
+function printTipografiaQr(){
+  const arr=state.containers.slice().sort((a,b)=>String(a.number).localeCompare(String(b.number),'it',{numeric:true}));
+  const w=window.open('','_blank');
+  w.document.write(`<html><head><title>QR tipografia</title><style>
+    @page{size:A4;margin:10mm}body{font-family:Arial;margin:0}.labels{display:grid;grid-template-columns:repeat(2,1fr);gap:8mm}.label{border:1px solid #333;text-align:center;padding:5mm;page-break-inside:avoid;min-height:85mm}img{width:60mm;height:60mm}b{font-size:20px}small{font-size:11px}
+  </style></head><body>${printBarHtml()}<div class="labels">${arr.map(c=>`<div class="label"><img src="${qrUrl(c,520)}"><br><b>${esc((c.type||'CONTENITORE').toUpperCase())} N. ${esc(c.number||'')}</b><br><small>${esc(c.serial||'')}</small></div>`).join('')}</div><script>setTimeout(()=>print(),800)<\/script></body></html>`);
+  w.document.close();
+}
+
+function groupTotals(rows, keyFn){
+  const map={};
+  rows.forEach(c=>{
+    const key=keyFn(c)||'—';
+    if(!map[key])map[key]={key,hl:0,liters:0,count:0};
+    map[key].hl+=Number(c.hl)||0;
+    map[key].liters+=Number(c.liters)||0;
+    map[key].count++;
+  });
+  return Object.values(map).sort((a,b)=>String(a.key).localeCompare(String(b.key),'it'));
+}
+function totalsTable(title, rows){
+  return `<h2>${esc(title)}</h2><div class="table-wrap"><table><thead><tr><th>Voce</th><th>N. contenitori</th><th>HL</th><th>Litri</th></tr></thead><tbody>${rows.map(r=>`<tr><td><b>${esc(r.key)}</b></td><td>${r.count}</td><td class="right">${fmt(r.hl)}</td><td class="right">${fmt(r.liters,0)}</td></tr>`).join('')||'<tr><td colspan="4">Nessun dato.</td></tr>'}</tbody></table></div>`;
+}
+
+function containerTotalsDetail(rows){
+  const sorted=rows.slice().sort((a,b)=>String(a.denomination||'').localeCompare(String(b.denomination||''),'it') || String(a.category||'').localeCompare(String(b.category||''),'it') || String(a.number||'').localeCompare(String(b.number||''),'it',{numeric:true}));
+  return `<h2>Totali della tabella / dettaglio cisterne</h2>
+  <div class="table-wrap"><table><thead><tr>
+    <th>Contenitore</th><th>Matricola</th><th>Denominazione</th><th>Atto/DOP/IGP</th><th>Categoria</th><th>Colore</th><th>Gusto</th><th>Nome vino</th><th>Lotto</th><th>Riempimento</th><th>HL</th><th>Litri</th>
+  </tr></thead><tbody>${sorted.map(c=>`<tr>
+    <td><b>${esc(c.type||'')} ${esc(c.number||'')}</b></td>
+    <td>${esc(c.serial||'')}</td>
+    <td>${esc(c.denomination||'—')}</td>
+    <td>${esc(c.classification||'—')}</td>
+    <td>${esc(c.category||'—')}</td>
+    <td>${esc(c.color||'—')}</td>
+    <td>${esc(c.taste||'—')}</td>
+    <td>${esc(c.wineName||'—')}</td>
+    <td>${esc(c.lot||'—')}</td>
+    <td>${esc(getRiempimento(c))}</td>
+    <td class="right"><b>${fmt(c.hl)}</b></td>
+    <td class="right">${fmt(c.liters,0)}</td>
+  </tr>`).join('')||'<tr><td colspan="12">Nessun contenitore pieno.</td></tr>'}</tbody>
+  <tfoot><tr><th colspan="10" style="text-align:right">Totale generale tabella</th><th class="right">${fmt(sorted.reduce((s,c)=>s+(Number(c.hl)||0),0))}</th><th class="right">${fmt(sorted.reduce((s,c)=>s+(Number(c.liters)||0),0),0)}</th></tr></tfoot></table></div>`;
+}
+
+function showTotals(){
+  const rows=(state.containers||[]).filter(c=>!c.empty && ((Number(c.hl)||0)>0 || (Number(c.liters)||0)>0));
+  const totalHl=rows.reduce((s,c)=>s+(Number(c.hl)||0),0);
+  const totalLiters=rows.reduce((s,c)=>s+(Number(c.liters)||0),0);
+  const byColor=groupTotals(rows,c=>c.color||'Senza colore');
+  const byCategory=groupTotals(rows,c=>c.category||'Senza categoria');
+  const byDen=groupTotals(rows,c=>c.denomination||'Senza denominazione');
+  const byDenTaste=groupTotals(rows,c=>[c.denomination||'Senza denominazione',c.taste||'Senza gusto'].join(' · '));
+  const byTaste=groupTotals(rows,c=>c.taste||'Senza gusto');
+  document.getElementById('main').innerHTML=`<div class="section-title"><h2>Totali</h2><div><button onclick="printTotals()">Stampa totali</button><button onclick="renderMain()">Torna scheda</button></div></div>
+  <div class="grid"><div class="kpi"><label>Totale complessivo HL</label><div class="v">${fmt(totalHl)}</div></div><div class="kpi"><label>Totale litri</label><div class="v">${fmt(totalLiters,0)}</div></div><div class="kpi"><label>Contenitori pieni</label><div class="v">${rows.length}</div></div></div>
+  ${totalsTable('Totale per colore',byColor)}
+  ${totalsTable('Totale per categoria',byCategory)}
+  ${totalsTable('Totale per denominazione',byDen)}
+  ${totalsTable('Totale per denominazione + gusto',byDenTaste)}
+  ${totalsTable('Totale per gusto',byTaste)}
+  ${containerTotalsDetail(rows)}`;
+}
+function printTotals(){showTotals();setTimeout(()=>window.print(),200);}
+
+function openListsManager(){renderLists();document.getElementById('listModal').style.display='flex'}
+function closeListsManager(){document.getElementById('listModal').style.display='none';renderMain()}
+function renderSmallList(key,el){document.getElementById(el).innerHTML=(state.lists[key]||[]).map((v,i)=>`<div style="display:flex;gap:6px;margin:6px 0"><input value="${esc(v)}" onchange="state.lists['${key}'][${i}]=this.value;save();renderLists();renderMain()"><button class="small danger" onclick="state.lists['${key}'].splice(${i},1);save();renderLists();renderMain()">x</button></div>`).join('')}
+function renderLists(){renderSmallList('denominations','denList');renderSmallList('wineNames','nameList');renderSmallList('categories','catList');renderSmallList('classifications','classList');renderSmallList('colors','colorList');renderSmallList('tastes','tasteList')}
+function addListVal(key,inputId){const v=(document.getElementById(inputId).value||'').trim();if(!v)return;state.lists[key]=state.lists[key]||[];if(!state.lists[key].includes(v))state.lists[key].push(v);document.getElementById(inputId).value='';save();renderLists();renderMain()}
+function exportData(){const blob=new Blob([JSON.stringify(state,null,2)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='backup_qr_cisterne_'+today()+'.json';setSyncStatus('Backup scaricato. Conservalo in un posto sicuro.','ok');a.click()}
+function importData(ev){const f=ev.target.files[0];if(!f)return;const rd=new FileReader();rd.onload=()=>{try{const imported=JSON.parse(rd.result);state=mergeStates(state,imported);localStorage.setItem(STORE,JSON.stringify(state));selectedId=state.containers[0]?.id||null;renderList();renderMain();setSyncStatus('Dati importati su questo dispositivo. Controlla e poi premi “Salva”.','warn');alert('Dati importati e uniti con quelli esistenti. Controlla e poi premi “Salva”.')}catch(e){alert('File non valido.')}};rd.readAsText(f);ev.target.value=''}
+function publicCardHtml(c){
+  return `<div class="public-card">
+    <h1>${esc(titleC(c))}</h1>
+    <div class="sub">Matricola: ${esc(c.serial||'—')}</div>
+    <hr>
+    <p><b>Data:</b> ${esc(dateIT(c.date)||'—')} · <b>Annata:</b> ${esc(c.annata||'—')}</p>
+    <p><b>Vino:</b><br><span class="value">${esc(c.wineName||'—')}</span></p>
+    <p><b>Denominazione:</b><br>${esc(c.denomination||'—')}</p><p><b>Categoria:</b> ${esc(c.category||'—')}</p><p><b>Atto/DOP/IGP:</b> ${esc(c.classification||'—')}</p>
+    <p><b>Colore:</b> ${esc(c.color||'—')} · <b>Gusto:</b> ${esc(c.taste||'—')}</p>
+    <p><b>Lotto:</b> ${esc(c.lot||'—')}</p>
+    <p><b>HL:</b> <span class="value">${esc(c.hl||'—')}</span> · <b>Litri:</b> ${esc(c.liters||'—')}</p>
+    <p><b>Riempimento:</b> <span class="value">${esc(getRiempimento(c))}</span></p>
+    <p><b>Idoneità:</b> ${esc(c.idoneitaNo||'—')} ${c.idoneitaDate?('del '+esc(dateIT(c.idoneitaDate))):''}</p>
+    <p><b>${c.productItaly?'PRODOTTO IN ITALIA':''}</b><br><b>${c.containsSulfites?'CONTIENE SOLFITI':''}</b></p>
+    <p><b>Note:</b> ${esc(c.notes||'')}</p>
+  </div>`;
+}
+function changePassword(){
+  var m=document.getElementById('cmChange'); if(!m)return;
+  var cur=localStorage.getItem('cm_password_qr') || window.CM_DEFAULT_PASSWORD || 'cantina2025';
+  var fNew=document.getElementById('cmcNew');
+  fNew.value=cur;
+  document.getElementById('cmcMsg').textContent='';
+  document.getElementById('cmcMsg').style.color='#b33';
+  m.style.display='flex';
+  setTimeout(function(){fNew.focus();fNew.select();},80);
+}
+function closeChangePassword(){
+  var m=document.getElementById('cmChange'); if(m)m.style.display='none';
+}
+function saveNewPassword(){
+  var msg=document.getElementById('cmcMsg');
+  var n1=(document.getElementById('cmcNew').value||'').trim();
+  if(!n1){ msg.textContent='Scrivi una password'; return; }
+  localStorage.setItem('cm_password_qr', n1);
+  msg.style.color='#2e7d32';
+  msg.textContent='Password salvata su questo dispositivo.';
+  setTimeout(closeChangePassword, 1100);
+}
+async function maybePublicView(){
+  const params=new URLSearchParams(location.search);
+  const snap=params.get('snap');
+  if(snap){
+    const c=decodeSnapshot(snap);
+    if(c){
+      document.body.innerHTML=publicCardHtml(c);
+      return true;
+    }
+    document.body.innerHTML='<div class="public-card"><h1>Scheda non leggibile</h1><p>Il link salvato non è valido.</p></div>';
+    return true;
+  }
+  const id=params.get('id') || params.get('n');
+  if(!id)return false;
+  document.body.innerHTML='<div class="public-card"><h1>Caricamento scheda...</h1><p>Attendere.</p></div>';
+  let data=null;
+  try{data=await loadFromCloud();}catch(e){}
+  const list=(data&&data.containers)||state.containers||[];
+  const c=list.find(x=>x.id===id || String(x.number)===String(id));
+  if(!c){
+    document.body.innerHTML='<div class="public-card"><h1>Scheda non trovata</h1><p>Contenitore: '+esc(id)+'</p><p>Controlla il Google Sheet collegato.</p></div>';
+    return true;
+  }
+  document.body.innerHTML=publicCardHtml(c);
+  replaceUrlWithSnapshot(c);
+  return true;
+}
+// ===== AGGIORNAMENTO AUTOMATICO QUANDO RIAPRI L'APP =====
+// Su iPhone Safari tiene la pagina "congelata": riaprendola non ricaricava i dati.
+// Ora appena la pagina torna visibile, ricarica da sola da Google Sheets.
+let lastAutoLoad=Date.now();
+async function autoRefreshFromCloud(){
+  if(location.search)return; // viste pubbliche QR: non toccare
+  if(document.activeElement && ['INPUT','SELECT','TEXTAREA'].includes(document.activeElement.tagName))return; // non disturbare mentre scrivi
+  try{
+    setSyncStatus('Controllo se ci sono novità online...','warn');
+    const cloud=await loadFromCloud();
+    const prima=JSON.stringify(state);
+    const merged=mergeStatesKeepLocal(state,cloud);
+    if(JSON.stringify(merged)!==prima){
+      state=merged;
+      localStorage.setItem(STORE,JSON.stringify(state));
+      selectedId=(state.containers.find(c=>c.id===selectedId)||state.containers[0])?.id||null;
+      renderList();renderMain();
+      setSyncStatus('Aggiornato: caricate le ultime modifiche online.','ok');
+    }else{
+      setSyncStatus('Dati già aggiornati.','ok');
+    }
+  }catch(e){
+    setSyncStatus('Cloud non raggiungibile: uso dati dispositivo','err');
+  }
+}
+document.addEventListener('visibilitychange',()=>{
+  if(document.visibilityState==='visible' && Date.now()-lastAutoLoad>15000){
+    lastAutoLoad=Date.now();
+    autoRefreshFromCloud();
+  }
+});
+window.addEventListener('pageshow',(e)=>{
+  if(e.persisted){
+    lastAutoLoad=Date.now();
+    autoRefreshFromCloud();
+  }
+});
+
+load();maybePublicView().then(isPublic=>{if(!isPublic){renderList();if(typeof renderHomeScreen==='function')renderHomeScreen();else renderMain();startCloud();}});
+</script>
+</body>
+</html>
